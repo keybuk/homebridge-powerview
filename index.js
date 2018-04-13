@@ -26,17 +26,19 @@ function PowerViewPlatform(log, config, api) {
 	this.config = config;
 	this.api = api;
 
-	this.host = config["host"];
-
 	this.shades = [];
 	this.delayed = [];
+
+	if (config != null) {
+		this.host = config["host"];
 	
-	this.api.on('didFinishLaunching', function() {
-		this.log("PowerView didFinishLaunching");
-		this.updateShades(function(err) {
-			this.pollShades();
+		this.api.on('didFinishLaunching', function() {
+			this.log("PowerView didFinishLaunching");
+			this.updateShades(function(err) {
+				this.pollShades();
+			}.bind(this));
 		}.bind(this));
-	}.bind(this));
+	}
 }
 
 // Called when a cached accessory is loaded to set up callbacks.
