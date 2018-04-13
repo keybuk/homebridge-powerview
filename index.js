@@ -43,6 +43,8 @@ function PowerViewPlatform(log, config, api) {
 PowerViewPlatform.prototype.configureAccessory = function(accessory) {
   this.log("Configure Accessory %s", accessory.displayName);
 
+  accessory.reachable = true;
+
   this.useShadeAccessory(accessory);
 }
 
