@@ -256,6 +256,7 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, positionId, position
 	var data = this.delayed[shadeId];
 	if (data == null) {
 		data = { "shade": { "positions": { } } };
+		data.shade.positions = this.shades[shadeId].data.positions;
 	}
 
 	data.shade.positions["posKind" + positionId] = positionId;
