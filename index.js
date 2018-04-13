@@ -98,7 +98,7 @@ PowerViewPlatform.prototype.useShadeAccessory = function(accessory, shadeData) {
 
 	if (shadeData != null) {
 		this.shades[shadeId].data = shadeData;
-		this.setShade(shadeData);
+		this.setShade(shadeId, shadeData);
 	} else {
 		this.updateShade(shadeId);
 	}
