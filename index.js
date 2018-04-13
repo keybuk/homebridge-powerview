@@ -212,7 +212,6 @@ PowerViewPlatform.prototype.setShade = function(shadeId, shadeData) {
 		var position = Math.round(100 * (shadeData.positions.position1 / 65535));
 		this.shades[shadeId].positions[1] = position;
 
-		this.log("%s/%d = %d", shadeId, 1, position);
 		service.updateCharacteristic(Characteristic.CurrentPosition, position);
 		service.updateCharacteristic(Characteristic.TargetPosition, position);
 	}
@@ -222,7 +221,6 @@ PowerViewPlatform.prototype.setShade = function(shadeId, shadeData) {
 		var position = Math.round(100 * (shadeData.positions.position2 / 65535));
 		this.shades[shadeId].positions[2] = position;
 
-		this.log("%s/%d = %d", shadeId, 2, position);
 		service.updateCharacteristic(Characteristic.CurrentPosition, position);
 		service.updateCharacteristic(Characteristic.TargetPosition, position);
 	}
