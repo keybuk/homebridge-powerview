@@ -3,7 +3,7 @@ var http = require('http');
 var Accessory, Service, Characteristic, UUIDGen;
 
 let ShadePollIntervalMs = null; //30000;
-let SceneCoalesceDelayMs = 10;
+let SceneCoalesceDelayMs = 100;
 
 let BottomServiceSubtype = 'bottom';
 let TopServiceSubtype = 'top';
@@ -27,12 +27,9 @@ function PowerViewPlatform(log, config, api) {
 	this.config = config;
 	this.api = api;
 
-	// Throttle all requests into a queue to avoid confusing the hub.
-	this.pool = new http.Agent();
-	this.pool.maxSockets = 1;
-
 	this.shades = [];
 	this.delayed = [];
+	this.queue = [];
 
 	if (config != null) {
 		this.host = config["host"];
@@ -149,8 +146,7 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 	this.log("Updating shades");
 
 	request.get({
-		url: "http://" + this.host + "/api/shades",
-		pool: this.pool
+		url: "http://" + this.host + "/api/shades"
 	}, function(err, response, body) {
 		if (!err && response.statusCode == 200) {
 			var newShades = [];
@@ -192,8 +188,7 @@ PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 	this.log("Updating shade: %s", shadeId);
 
 	request.get({
-		url: "http://" + this.host + "/api/shades/" + shadeId,
-		pool: this.pool
+		url: "http://" + this.host + "/api/shades/" + shadeId
 	}, function(err, response, body) {
 		if (!err && response.statusCode == 200) {
 			var json = JSON.parse(body);
@@ -271,48 +266,55 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, positionId, position
 	var data = this.delayed[shadeId];
 	if (data == null) {
 		data = { "shade": { "positions": { } } };
-		data.shade.positions = this.shades[shadeId].data.positions;
+		data.shade.positions = Object.assign({}, this.shades[shadeId].data.positions);
 	}
 
 	data.shade.positions["posKind" + positionId] = positionId;
 	data.shade.positions["position" + positionId] = Math.round(65535 * (position / 100));
 
-	if (this.delayed[shadeId] != null) {
-		callback(null);
-	} else {
-		this.delayed[shadeId] = data;
-
-		setTimeout(function(shadeId) {
-			this.log("Delayed setPosition %s", shadeId);
-
-			var data = this.delayed[shadeId];
-			this.delayed[shadeId] = null;
-
-			if (data.shade.positions["position1"] != null) {
-				this.log("set %s/%d = %d", shadeId, 1, data.shade.positions["position1"]);
-			}
-			if (data.shade.positions["position2"] != null) {
-				this.log("set %s/%d = %d", shadeId, 2, data.shade.positions["position2"]);
-			}
-
-			request({
-				url: "http://" + this.host + "/api/shades/" + shadeId,
-				method: 'PUT',
-				json: data,
-				pool: this.pool
-			}, function(err, response, body) {
-				if (!err && response.statusCode == 200) {
-					var json = body;
-					this.setShade(shadeId, json.shade);
-
-					callback(null);
-				} else {
-					this.log("Error setting position (status code %s): %s", response.statusCode, err);
-					callback(err);
-				}
-			}.bind(this));
-		}.bind(this), SceneCoalesceDelayMs, shadeId);
+	if (this.queue.length == 0) {
+		this.scheduleSetPosition();
 	}
+	if (this.delayed[shadeId] == null) {
+		this.queue.push(shadeId);
+	}
+	this.delayed[shadeId] = data;
+
+	callback(null);
+}
+
+PowerViewPlatform.prototype.scheduleSetPosition = function() {
+	setTimeout(function() {
+		this.log("Delayed setPosition");
+
+		var shadeId = this.queue.shift();
+		var data = this.delayed[shadeId];
+		this.delayed[shadeId] = null;
+
+		if (data.shade.positions["position1"] != null) {
+			this.log("set %s/%d = %d", shadeId, 1, data.shade.positions["position1"]);
+		}
+		if (data.shade.positions["position2"] != null) {
+			this.log("set %s/%d = %d", shadeId, 2, data.shade.positions["position2"]);
+		}
+
+		request({
+			url: "http://" + this.host + "/api/shades/" + shadeId,
+			method: 'PUT',
+			json: data
+		}, function(err, response, body) {
+			if (!err && response.statusCode == 200) {
+				var json = body;
+				this.setShade(shadeId, json.shade);
+			} else {
+				this.log("Error setting position (status code %s): %s", response.statusCode, err);
+			}
+
+			if (this.queue.length > 0) {
+				this.scheduleSetPosition();
+			}
+		}.bind(this));
+	}.bind(this), SceneCoalesceDelayMs);
 }
 
 PowerViewPlatform.prototype.getState = function(shadeId, positionId, callback) {
