@@ -1,4 +1,5 @@
 var request = require('request');
+var http = require('http');
 var Accessory, Service, Characteristic, UUIDGen;
 
 let ShadePollIntervalMs = null; //30000;
@@ -25,6 +26,10 @@ function PowerViewPlatform(log, config, api) {
 	this.log = log;
 	this.config = config;
 	this.api = api;
+
+	// Throttle all requests into a queue to avoid confusing the hub.
+	this.pool = new http.Agent();
+	this.pool.maxSockets = 1;
 
 	this.shades = [];
 	this.delayed = [];
@@ -144,7 +149,8 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 	this.log("Updating shades");
 
 	request.get({
-		url: "http://" + this.host + "/api/shades"
+		url: "http://" + this.host + "/api/shades",
+		pool: this.pool
 	}, function(err, response, body) {
 		if (!err && response.statusCode == 200) {
 			var newShades = [];
@@ -186,7 +192,8 @@ PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 	this.log("Updating shade: %s", shadeId);
 
 	request.get({
-		url: "http://" + this.host + "/api/shades/" + shadeId
+		url: "http://" + this.host + "/api/shades/" + shadeId,
+		pool: this.pool
 	}, function(err, response, body) {
 		if (!err && response.statusCode == 200) {
 			var json = JSON.parse(body);
@@ -280,7 +287,8 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, positionId, position
 			request({
 				url: "http://" + this.host + "/api/shades/" + shadeId,
 				method: 'PUT',
-				json: data
+				json: data,
+				pool: this.pool
 			}, function(err, response, body) {
 				if (!err && response.statusCode == 200) {
 					var json = body;
