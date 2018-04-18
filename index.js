@@ -1,7 +1,7 @@
 var request = require('request');
 var Accessory, Service, Characteristic, UUIDGen;
 
-let ShadePollIntervalMs = 30000;
+let ShadePollIntervalMs = null; //30000;
 let SceneCoalesceDelayMs = 10;
 
 let BottomServiceSubtype = 'bottom';
@@ -230,11 +230,13 @@ PowerViewPlatform.prototype.setShade = function(shadeId, shadeData) {
 
 // Regularly poll shades for changes.
 PowerViewPlatform.prototype.pollShades = function() {
-	setTimeout(function() {
-		this.updateShades(function(err) {
-			this.pollShades();
-		}.bind(this));
-	}.bind(this), ShadePollIntervalMs);
+	if (ShadePollIntervalMs != null) {
+		setTimeout(function() {
+			this.updateShades(function(err) {
+				this.pollShades();
+			}.bind(this));
+		}.bind(this), ShadePollIntervalMs);
+	}
 }
 
 
