@@ -221,6 +221,8 @@ PowerViewPlatform.prototype.setShade = function(shadeId, shadeData) {
 		var position = Math.round(100 * (shadeData.positions.position1 / 65535));
 		this.shades[shadeId].positions[1] = position;
 
+		this.log("now %s/%d = %d (%d)", shadeId, 1, position, shadeData.positions.position1);
+
 		service.updateCharacteristic(Characteristic.CurrentPosition, position);
 		service.updateCharacteristic(Characteristic.TargetPosition, position);
 	}
@@ -229,6 +231,8 @@ PowerViewPlatform.prototype.setShade = function(shadeId, shadeData) {
 	if (service != null && shadeData.positions.position2 != null) {
 		var position = Math.round(100 * (shadeData.positions.position2 / 65535));
 		this.shades[shadeId].positions[2] = position;
+
+		this.log("now %s/%d = %d (%d)", shadeId, 2, position, shadeData.positions.position2);
 
 		service.updateCharacteristic(Characteristic.CurrentPosition, position);
 		service.updateCharacteristic(Characteristic.TargetPosition, position);
@@ -283,6 +287,13 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, positionId, position
 
 			var data = this.delayed[shadeId];
 			this.delayed[shadeId] = null;
+
+			if (data.shade.positions["position1"] != null) {
+				this.log("set %s/%d = %d", shadeId, 1, data.shade.positions["position1"]);
+			}
+			if (data.shade.positions["position2"] != null) {
+				this.log("set %s/%d = %d", shadeId, 2, data.shade.positions["position2"]);
+			}
 
 			request({
 				url: "http://" + this.host + "/api/shades/" + shadeId,
