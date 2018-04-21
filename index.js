@@ -291,7 +291,7 @@ PowerViewPlatform.prototype.scheduleSetPosition = function() {
 	setTimeout(function() {
 		this.log("Delayed setPosition, queue:", this.queue.join(','));
 
-		var shadeId = this.queue.shift();
+		var shadeId = this.queue[0];
 		var data = this.delayed[shadeId];
 		this.delayed[shadeId] = null;
 
@@ -315,6 +315,7 @@ PowerViewPlatform.prototype.scheduleSetPosition = function() {
 				this.log("Error setting position (status code %s): %s", response.statusCode, err);
 			}
 
+			this.queue.shift();
 			if (this.queue.length > 0) {
 				this.log("More in queue:", this.queue.join(','));
 				this.scheduleSetPosition();
