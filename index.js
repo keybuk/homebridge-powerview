@@ -158,6 +158,7 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 					this.log("Found new shade: %s", shadeId);
 					newShades[shadeId] = this.addShade(shadeData);
 				} else {
+					this.log("Updating existing shade: %s", shadeId);
 					newShades[shadeId] = this.shades[shadeId];
 				}
 
@@ -191,6 +192,7 @@ PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 		url: "http://" + this.host + "/api/shades/" + shadeId
 	}, function(err, response, body) {
 		if (!err && response.statusCode == 200) {
+			this.log("Update response: %s", shadeId);
 			var json = JSON.parse(body);
 
 			this.setShade(shadeId, json.shade);
@@ -273,9 +275,11 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, positionId, position
 	data.shade.positions["position" + positionId] = Math.round(65535 * (position / 100));
 
 	if (this.queue.length == 0) {
+		this.log("Queue empty, scheduling future setPosition");
 		this.scheduleSetPosition();
 	}
 	if (this.delayed[shadeId] == null) {
+		this.log("First update for this shade, adding to queue");
 		this.queue.push(shadeId);
 	}
 	this.delayed[shadeId] = data;
@@ -285,7 +289,7 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, positionId, position
 
 PowerViewPlatform.prototype.scheduleSetPosition = function() {
 	setTimeout(function() {
-		this.log("Delayed setPosition");
+		this.log("Delayed setPosition, queue:", this.queue.join(','));
 
 		var shadeId = this.queue.shift();
 		var data = this.delayed[shadeId];
@@ -304,6 +308,7 @@ PowerViewPlatform.prototype.scheduleSetPosition = function() {
 			json: data
 		}, function(err, response, body) {
 			if (!err && response.statusCode == 200) {
+				this.log("Set response: %s", shadeId);
 				var json = body;
 				this.setShade(shadeId, json.shade);
 			} else {
@@ -311,6 +316,7 @@ PowerViewPlatform.prototype.scheduleSetPosition = function() {
 			}
 
 			if (this.queue.length > 0) {
+				this.log("More in queue:", this.queue.join(','));
 				this.scheduleSetPosition();
 			}
 		}.bind(this));
