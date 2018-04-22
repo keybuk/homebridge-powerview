@@ -4,6 +4,7 @@ var Accessory, Service, Characteristic, UUIDGen;
 
 let ShadePollIntervalMs = null; //30000;
 let SceneCoalesceDelayMs = 100;
+let RequestIntervalMs = 100;
 
 let BottomServiceSubtype = 'bottom';
 let TopServiceSubtype = 'top';
@@ -276,7 +277,7 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, positionId, position
 
 	if (this.queue.length == 0) {
 		this.log("Queue empty, scheduling future setPosition");
-		this.scheduleSetPosition();
+		this.scheduleSetPosition(SceneCoalesceDelayMs);
 	}
 	if (this.delayed[shadeId] == null) {
 		this.log("First update for this shade, adding to queue");
@@ -287,7 +288,7 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, positionId, position
 	callback(null);
 }
 
-PowerViewPlatform.prototype.scheduleSetPosition = function() {
+PowerViewPlatform.prototype.scheduleSetPosition = function(delay) {
 	setTimeout(function() {
 		this.log("Delayed setPosition, queue:", this.queue.join(','));
 
@@ -318,10 +319,10 @@ PowerViewPlatform.prototype.scheduleSetPosition = function() {
 			this.queue.shift();
 			if (this.queue.length > 0) {
 				this.log("More in queue:", this.queue.join(','));
-				this.scheduleSetPosition();
+				this.scheduleSetPosition(RequestIntervalMs);
 			}
 		}.bind(this));
-	}.bind(this), SceneCoalesceDelayMs);
+	}.bind(this), delay);
 }
 
 PowerViewPlatform.prototype.getState = function(shadeId, positionId, callback) {
