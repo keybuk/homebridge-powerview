@@ -33,7 +33,7 @@ function PowerViewPlatform(log, config, api) {
 	this.queue = [];
 
 	if (config != null) {
-		this.host = config["host"];
+		this.host = config["host"] || 'powerview-hub.local';
 	
 		this.api.on('didFinishLaunching', function() {
 			this.log("PowerView didFinishLaunching");
