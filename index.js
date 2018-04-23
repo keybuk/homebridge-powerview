@@ -10,7 +10,26 @@ let BottomServiceSubtype = 'bottom';
 let TopServiceSubtype = 'top';
 
 // TODO:
-// - meta-data
+// - HomeKit meta-data:
+//   Manufacturer
+//   Serial Number
+//   Model
+// - firmware version in shadeData:
+//    "firmware": { "build": 0, "index": 32, "revision": 2, "subRevision": 1 },
+//    = 2.1.0
+//     "firmware": { "build": 1944, "revision": 1, "subRevision": 8 },
+//    = 1.8.1944
+// - battery status in shadeData:
+//   "batteryStatus": 3,
+//   "batteryStrength": 182,
+// - signal strength in shadeData (not always - maybe not if via repeater?):
+//   "signalStrength": 4,
+
+// Shade types:
+// 5 = Roller, Screen & Banded Shades
+//     (one position open-closed)
+// 8 = Duette & Appaulse honeycone shades
+//     (two positions, both open-closed)
 
 module.exports = function(homebridge) {
 	Accessory = homebridge.platformAccessory;
