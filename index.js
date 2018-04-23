@@ -98,6 +98,11 @@ PowerViewPlatform.prototype.addShade = function(shadeData) {
 	var accessory = new Accessory(name, uuid);
 	accessory.context.shadeId = shadeId;
 
+	if (shadeData.positions == null) {
+		this.log("Missing position data in shade data, about to crash", shadeData);
+	}
+
+	// FIXME this should move into useShadeAccessory
 	if (shadeData.positions.posKind2 == 2) {
 		accessory.addService(Service.WindowCovering, name, BottomServiceSubtype);
 		accessory.addService(Service.WindowCovering, name, TopServiceSubtype);
@@ -124,9 +129,12 @@ PowerViewPlatform.prototype.useShadeAccessory = function(accessory, shadeData) {
 		this.shades[shadeId].data = shadeData;
 		this.setShade(shadeId, shadeData);
 	} else {
+		// FIXME we don't wait for this callback
 		this.updateShade(shadeId);
 	}
 
+	// FIXME the services may have changed since last time, wait for the updateShade and add/remove
+	// accessories?
 	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, BottomServiceSubtype);
 	if (service != null) {
 		service
