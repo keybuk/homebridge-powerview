@@ -177,7 +177,7 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 				callback(null);
 			}
 		} else {
-			this.log("Error getting shades (status code %s): %s", response.statusCode, err);
+			this.log("Error getting shades (status code %s): %s", response ? response.statusCode : "-", err);
 			if (callback != null) {
 				callback(err);
 			}
