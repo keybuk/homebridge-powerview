@@ -57,7 +57,7 @@ The plugin uses the information from the PowerView hub to determine the types of
 
 If you see this, first please file an issue and provide details about the kind of shade that this is, so I can correctly recognize it in future versions.
 
-You can then add a `forceRollerShades`, `forceSilhouetteShades`, or `forceDuetteShades` key to your `config.json` to force shades to be a certain type, e.g.:
+You can then add a `forceRollerShades`, `forceSilhouetteShades`, `forceLuminetteShades`, or `forceDuetteShades` key to your `config.json` to force shades to be a certain type, e.g.:
 
 ```
 "forceDuetteShades": [ 12345, 99999 ]
