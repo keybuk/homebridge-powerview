@@ -8,13 +8,15 @@ let ShadePollIntervalMs = 60000;
 let Shade = {
 	ROLLER: 1,
 	DUETTE: 2,
-	SILHOUETTE: 3
+	SILHOUETTE: 3,
+	LUMINETTE: 4
 }
 
 let ShadeTypes = {
 	ROLLER: [ 5, 42 ],
 	DUETTE: [ 8 ],
-	SILHOUETTE: [ 18, 23 ]
+	SILHOUETTE: [ 18, 23 ],
+	LUMINETTE: [ 16 ]
 }
 
 let SubType = {
@@ -59,6 +61,7 @@ function PowerViewPlatform(log, config, api) {
 		this.forceRollerShades = config["forceRollerShades"] || [];
 		this.forceDuetteShades = config["forceDuetteShades"] || [];
 		this.forceSilhouetteShades = config["forceSilhouetteShades"] || [];
+		this.forceLuminetteShades = config["forceLuminetteShades"] || [];
 
 		this.api.on('didFinishLaunching', function() {
 			this.updateHubInfo();
@@ -79,6 +82,8 @@ PowerViewPlatform.prototype.shadeType = function(shade) {
 		return Shade.DUETTE;
 	if (this.forceSilhouetteShades.includes(shade.id))
 		return Shade.SILHOUETTE;
+	if (this.forceLuminetteShades.includes(shade.id))
+		return Shade.LUMINETTE;
 
 	if (ShadeTypes.ROLLER.includes(shade.type))
 		return Shade.ROLLER;
@@ -86,6 +91,8 @@ PowerViewPlatform.prototype.shadeType = function(shade) {
 		return Shade.DUETTE;
 	if (ShadeTypes.SILHOUETTE.includes(shade.type))
 		return Shade.SILHOUETTE;
+	if (ShadeTypes.LUMINETTE.includes(shade.type))
+		return Shade.LUMINETTE;
 
 	this.log("*** Shade %d has unknown type %d, assuming roller ***", shade.id, shade.type);
 	return Shade.ROLLER
@@ -195,6 +202,32 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 		}
 	}
 
+	// For luminette, we stick to the default "bottom" subtype even though these are left/right shades;
+	// because HomeKit doesn't make a distinction anyway.
+	if (accessory.context.shadeType == Shade.LUMINETTE) {
+		service
+			.getCharacteristic(Characteristic.CurrentVerticalTiltAngle)
+			.removeAllListeners('get')
+			.on('get', this.getPosition.bind(this, accessory.context.shadeId, Position.VANES));
+
+		service
+			.getCharacteristic(Characteristic.TargetVerticalTiltAngle)
+			.removeAllListeners('set')
+			.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.VANES));
+	} else {
+		if (service.testCharacteristic(Characteristic.TargetVerticalTiltAngle)) {
+			var characteristic = service.getCharacteristic(Characteristic.TargetVerticalTiltAngle);
+			service.removeCharacteristic(characteristic);
+			service.addOptionalCharacteristic(Characteristic.TargetVerticalTiltAngle);
+		}
+
+		if (service.testCharacteristic(Characteristic.CurrentVerticalTiltAngle)) {
+			var characteristic = service.getCharacteristic(Characteristic.CurrentVerticalTiltAngle);
+			service.removeCharacteristic(characteristic);
+			service.addOptionalCharacteristic(Characteristic.CurrentVerticalTiltAngle);
+		}
+	}
+
 	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
 	if (accessory.context.shadeType == Shade.DUETTE) {
 		if (!service)
@@ -242,6 +275,12 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 						service.setCharacteristic(Characteristic.CurrentHorizontalTiltAngle, 0)
 					service.updateCharacteristic(Characteristic.TargetHorizontalTiltAngle, 0);
 				}
+
+				if (accessory.context.shadeType == Shade.LUMINETTE) {
+					if (current)
+						service.setCharacteristic(Characteristic.CurrentVerticalTiltAngle, 0)
+					service.updateCharacteristic(Characteristic.TargetVerticalTiltAngle, 0);
+				}
 			}
 
 			if (position == Position.VANES && accessory.context.shadeType == Shade.SILHOUETTE) {
@@ -258,6 +297,22 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 				if (current)
 					service.setCharacteristic(Characteristic.CurrentHorizontalTiltAngle, positions[Position.VANES]);
 				service.updateCharacteristic(Characteristic.TargetHorizontalTiltAngle, positions[Position.VANES]);
+			}
+
+			if (position == Position.VANES && accessory.context.shadeType == Shade.LUMINETTE) {
+				positions[Position.VANES] = Math.round(90 * hubValue / 32767);
+
+				var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.BOTTOM);
+
+				// Once we have a vane position, the shade must be closed.
+				if (current)
+					service.setCharacteristic(Characteristic.CurrentPosition, 0);
+				service.updateCharacteristic(Characteristic.TargetPosition, 0);
+				service.setCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
+
+				if (current)
+					service.setCharacteristic(Characteristic.CurrentVerticalTiltAngle, positions[Position.VANES]);
+				service.updateCharacteristic(Characteristic.TargetVerticalTiltAngle, positions[Position.VANES]);
 			}
 
 			if (position == Position.TOP && accessory.context.shadeType == Shade.DUETTE) {

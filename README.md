@@ -6,11 +6,16 @@ This is a plugin for [Homebridge](https://github.com/nfarina/homebridge) to prov
 
 You can download it from [npm](https://www.npmjs.com/package/homebridge-powerview).
 
-Supports:
+Supports both the Generation 1 and 2 hubs.
+
+Supported Shades:
 
  * Roller Shades.
- * Silhouette and Pirouette Shades with Vanes. The main accessory controls the vertical movement of the shades, and a slider under Details controls the tilt of the vanes. They can be controlled independently or combined using HomeKit scenes.
- * Duette Top-Down/Bottom-Up Shades. You will get two accessories, one for the bottom of the shade, and one of the top. They can be controlled independently or combined using HomeKit scenes,
+ * Silhouette and Pirouette Shades with Horizontal Vanes. The main accessory controls the vertical movement of the shades, and a slider under Details controls the tilt of the vanes when closed.
+ * Luminette Shades with Vertical Vanes. The main accessory controls the horizontal movement of the shades, and a slider under Details controls the tilt of the vanes when closed..
+ * Duette Top-Down/Bottom-Up Shades. You will get two accessories, one for the bottom of the shade, and one of the top. They can be controlled independently or combined using HomeKit scenes.
+
+ Shades can participate in HomeKit scenes and automations.
 
 ## Installation
 
