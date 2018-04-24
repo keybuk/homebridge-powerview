@@ -3,6 +3,11 @@ var Accessory, Service, Characteristic, UUIDGen;
 
 let ShadePollIntervalMs = null; //30000;
 
+let Shade = {
+	ROLLER: 1,
+	DUETTE: 2
+}
+
 let SubType = {
 	BOTTOM: 'bottom',
 	TOP: 'top'
@@ -29,11 +34,6 @@ let Position = {
 // - signal strength in shadeData (not always - maybe not if via repeater?):
 //   "signalStrength": 4,
 
-// Shade types:
-// 5 = Roller, Screen & Banded Shades
-//     (one position open-closed)
-// 8 = Duette & Appaulse honeycone shades
-//     (two positions, both open-closed)
 
 module.exports = function(homebridge) {
 	Accessory = homebridge.platformAccessory;
@@ -63,13 +63,38 @@ function PowerViewPlatform(log, config, api) {
 	}
 }
 
+// Returns the Shade type from the given shade data.
+PowerViewPlatform.prototype.shadeType = function(shade) {
+	switch (shade.type) {
+		case 5:
+		case 42:
+			return Shade.ROLLER;
+		case 8:
+			return Shade.DUETTE;
+		default:
+			this.log("Unknown shade type %d, assuming roller", shade.type);
+			return Shade.ROLLER
+	}
+}
+
+
 // Called when a cached accessory is loaded to set up callbacks.
 PowerViewPlatform.prototype.configureAccessory = function(accessory) {
 	this.log("Cached shade %s: %s", accessory.context.shadeId, accessory.displayName);
 
 	accessory.reachable = true;
 
- 	this.configureShadeAccessory(accessory);
+	if (!accessory.context.shadeType) {
+		// Port over a pre-typing shade.
+		var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
+		if (service) {
+			accessory.context.shadeType = Shade.DUETTE;
+		} else {
+			accessory.context.shadeType = Shade.ROLLER;
+		}
+	}
+
+	this.configureShadeAccessory(accessory);
 }
 
 // Adds a new shade accessory.
@@ -81,18 +106,7 @@ PowerViewPlatform.prototype.addShadeAccessory = function(shade) {
 
 	var accessory = new Accessory(name, uuid);
 	accessory.context.shadeId = shade.id;
-
-	if (shade.positions == null) {
-		this.log("Missing position data in shade data, about to crash", shade);
-	}
-
-	// FIXME this should move into useShadeAccessory
-	if (shade.positions.posKind2 == Position.TOP) {
-		accessory.addService(Service.WindowCovering, name, SubType.BOTTOM);
-		accessory.addService(Service.WindowCovering, name, SubType.TOP);
-	} else {
-		accessory.addService(Service.WindowCovering, name, SubType.BOTTOM);
-	}
+	accessory.context.shadeType = this.shadeType(shade);
 
 	this.configureShadeAccessory(accessory);
 	this.api.registerPlatformAccessories("homebridge-powerview", "PowerView", [accessory]);
@@ -104,6 +118,20 @@ PowerViewPlatform.prototype.addShadeAccessory = function(shade) {
 PowerViewPlatform.prototype.updateShadeAcccessory = function(shade) {
 	var accessory = this.accessories[shade.id];
 	this.log("Updating shade %s: %s", shade.id, accessory.displayName);
+
+	// If the shade changes type, remove the features that it should not have.
+	var newType = this.shadeType(shade);
+	if (newType != accessory.context.shadeType) {
+		this.log("Shade changed type %d -> %d", accessory.context.shadeType, newType);
+
+		if (accessory.context.shadeType == Shade.DUETTE) {
+			accessory.removeService(accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP));
+		}
+
+		accessory.context.shadeType = newType;
+
+		this.configureShadeAccessory(accessory);
+	}
 
 	return accessory;
 }
@@ -122,24 +150,32 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 	this.accessories[shadeId] = accessory;
 
 	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.BOTTOM);
-	if (service != null) {
-		service
-			.getCharacteristic(Characteristic.CurrentPosition)
-			.on('get', this.getPosition.bind(this, accessory.context.shadeId, Position.BOTTOM));
+	if (!service)
+		service = accessory.addService(Service.WindowCovering, accessory.displayName, SubType.BOTTOM);
+
+	service
+		.getCharacteristic(Characteristic.CurrentPosition)
+		.removeAllListeners('get')
+		.on('get', this.getPosition.bind(this, accessory.context.shadeId, Position.BOTTOM));
+
+	service
+		.getCharacteristic(Characteristic.TargetPosition)
+		.removeAllListeners('set')
+		.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.BOTTOM));
+
+	if (accessory.context.shadeType == Shade.DUETTE) {
+		service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
+		if (!service)
+			service = accessory.addService(Service.WindowCovering, accessory.displayName, SubType.TOP);
 
 		service
-			.getCharacteristic(Characteristic.TargetPosition)
-			.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.BOTTOM));
-	}
-
-	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
-	if (service != null) {
-		service
 			.getCharacteristic(Characteristic.CurrentPosition)
+			.removeAllListeners('get')
 			.on('get', this.getPosition.bind(this, accessory.context.shadeId, Position.TOP));
 
 		service
 			.getCharacteristic(Characteristic.TargetPosition)
+			.removeAllListeners('set')
 			.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.TOP));
 	}
 }
@@ -169,7 +205,7 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 				service.updateCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
 			}
 
-			if (position == Position.TOP) {
+			if (position == Position.TOP && accessory.context.shadeType == Shade.DUETTE) {
 				var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
 
 				positions[Position.TOP] = Math.round(100 * (hubValue / 65535));
