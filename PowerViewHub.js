@@ -1,10 +1,5 @@
 var request = require('request');
 
-module.exports = {
-	PowerViewHub: PowerViewHub,
-	Position: Position
-}
-
 let InitialRequestDelayMs = 100;
 let RequestIntervalMs = 100;
 
@@ -13,6 +8,7 @@ let Position = {
 	TOP: 2,
 	VANES: 3
 }
+exports.Position = Position;
 
 
 function PowerViewHub(log, host) {
@@ -21,6 +17,7 @@ function PowerViewHub(log, host) {
 
 	this.queue = [];
 }
+exports.PowerViewHub = PowerViewHub;
 
 // Queue a shades API request.
 PowerViewHub.prototype.queueRequest = function(queued) {
