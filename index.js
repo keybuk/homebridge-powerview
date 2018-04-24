@@ -58,10 +58,7 @@ function PowerViewPlatform(log, config, api) {
 		this.hub = new PowerViewHub(log, host);
 
 		this.api.on('didFinishLaunching', function() {
-			this.log("PowerView didFinishLaunching");
-			this.updateShades(function(err) {
-				this.pollShades();
-			}.bind(this));
+			this.updateShades();
 		}.bind(this));
 	}
 }
