@@ -338,7 +338,7 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, position, value, cal
 			break;
 	}
 
-	this.hub.putShadePosition(shadeId, position, hubValue, function(err, shade) {
+	this.hub.putShade(shadeId, position, hubValue, function(err, shade) {
 		if (!err) {
 			this.updateShadeValues(shade, true);
 			callback(null);
