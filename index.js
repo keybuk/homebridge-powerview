@@ -1,10 +1,7 @@
-var request = require('request');
-var http = require('http');
+var PowerViewHub = require('./PowerViewHub').PowerViewHub;
 var Accessory, Service, Characteristic, UUIDGen;
 
 let ShadePollIntervalMs = null; //30000;
-let SceneCoalesceDelayMs = 100;
-let RequestIntervalMs = 100;
 
 let BottomServiceSubtype = 'bottom';
 let TopServiceSubtype = 'top';
@@ -48,12 +45,11 @@ function PowerViewPlatform(log, config, api) {
 	this.api = api;
 
 	this.shades = [];
-	this.delayed = [];
-	this.queue = [];
 
-	if (config != null) {
-		this.host = config["host"] || 'powerview-hub.local';
-	
+	if (config) {
+		var host = config["host"] || 'powerview-hub.local';
+		this.hub = new PowerViewHub(log, host);
+
 		this.api.on('didFinishLaunching', function() {
 			this.log("PowerView didFinishLaunching");
 			this.updateShades(function(err) {
@@ -169,17 +165,12 @@ PowerViewPlatform.prototype.useShadeAccessory = function(accessory, shadeData) {
 }
 
 
-// Fetch the full set of shade data.
+// Gets the current set of shades, and updates the accessories.
 PowerViewPlatform.prototype.updateShades = function(callback) {
-	this.log("Updating shades");
-
-	request.get({
-		url: "http://" + this.host + "/api/shades"
-	}, function(err, response, body) {
-		if (!err && response.statusCode == 200) {
+	this.hub.getShades(function(err, shadeData) {
+		if (!err) {
 			var newShades = [];
-			var json = JSON.parse(body);
-			for (var shadeData of json.shadeData) {
+			for (var shadeData of shadeData) {
 				var shadeId = shadeData.id;
 
 				if (this.shades[shadeId] == null) {
@@ -199,39 +190,21 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 					this.removeAccessory(this.shades[shadeId].accessory);
 				}
 			}
-
-			if (callback != null) {
-				callback(null);
-			}
-		} else {
-			this.log("Error getting shades (status code %s): %s", response ? response.statusCode : "-", err);
-			if (callback != null) {
-				callback(err);
-			}
 		}
+
+		if (callback) callback(err);
 	}.bind(this));
 }
 
-// Fetch the data of a single shade.
+// Gets the current shade information, and updates values.
 PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
-	this.log("Updating shade: %s", shadeId);
-
-	request.get({
-		url: "http://" + this.host + "/api/shades/" + shadeId
-	}, function(err, response, body) {
-		if (!err && response.statusCode == 200) {
+	thus.hub.getShade(shadeId, function(err, shade) {
+		if (!err) {
 			this.log("Update response: %s", shadeId);
-			var json = JSON.parse(body);
-
-			this.setShade(shadeId, json.shade);
-			if (callback != null) {
-				callback(null, json.shade);
-			}
+			this.setShade(shadeId, shade);
+			if (callback) callback(null, shade);
 		} else {
-			this.log("Error getting shade (status code %s): %s", response ? response.statusCode : "-", err);
-			if (callback != null) {
-				callback(err);
-			}
+			if (callback) callback(err);
 		}
 	}.bind(this));
 }
@@ -289,67 +262,19 @@ PowerViewPlatform.prototype.getPosition = function(shadeId, positionId, callback
 	}.bind(this));
 }
 
-PowerViewPlatform.prototype.setPosition = function(shadeId, positionId, position, callback) {
-	this.log("setPosition %s/%d = %d", shadeId, positionId, position);
+// Characteristic callback for TargetPosition.set
+PowerViewPlatform.prototype.setPosition = function(shadeId, position, value, callback) {
+	this.log("setPosition %s/%d = %d", shadeId, position, value);
+	var hubValue = Math.round(65535 * (value / 100));
 
-	// Handle delaying an update.
-	var data = this.delayed[shadeId];
-	if (data == null) {
-		data = { "shade": { "positions": { } } };
-		data.shade.positions = Object.assign({}, this.shades[shadeId].data.positions);
-	}
-
-	data.shade.positions["posKind" + positionId] = positionId;
-	data.shade.positions["position" + positionId] = Math.round(65535 * (position / 100));
-
-	if (this.queue.length == 0) {
-		this.log("Queue empty, scheduling future setPosition");
-		this.scheduleSetPosition(SceneCoalesceDelayMs);
-	}
-	if (this.delayed[shadeId] == null) {
-		this.log("First update for this shade, adding to queue");
-		this.queue.push(shadeId);
-	}
-	this.delayed[shadeId] = data;
-
-	callback(null);
-}
-
-PowerViewPlatform.prototype.scheduleSetPosition = function(delay) {
-	setTimeout(function() {
-		this.log("Delayed setPosition, queue:", this.queue.join(','));
-
-		var shadeId = this.queue[0];
-		var data = this.delayed[shadeId];
-		this.delayed[shadeId] = null;
-
-		if (data.shade.positions["position1"] != null) {
-			this.log("set %s/%d = %d", shadeId, 1, data.shade.positions["position1"]);
+	this.hub.putShadePosition(shadeId, position, hubValue, function(err, shade) {
+		if (!err) {
+			this.setShade(shadeId, shade);
+			callback(null);
+		} else {
+			callback(err);
 		}
-		if (data.shade.positions["position2"] != null) {
-			this.log("set %s/%d = %d", shadeId, 2, data.shade.positions["position2"]);
-		}
-
-		request({
-			url: "http://" + this.host + "/api/shades/" + shadeId,
-			method: 'PUT',
-			json: data
-		}, function(err, response, body) {
-			if (!err && response.statusCode == 200) {
-				this.log("Set response: %s", shadeId);
-				var json = body;
-				this.setShade(shadeId, json.shade);
-			} else {
-				this.log("Error setting position (status code %s): %s", response ? response.statusCode : "-", err);
-			}
-
-			this.queue.shift();
-			if (this.queue.length > 0) {
-				this.log("More in queue:", this.queue.join(','));
-				this.scheduleSetPosition(RequestIntervalMs);
-			}
-		}.bind(this));
-	}.bind(this), delay);
+	}.bind(this));
 }
 
 PowerViewPlatform.prototype.getState = function(shadeId, positionId, callback) {
