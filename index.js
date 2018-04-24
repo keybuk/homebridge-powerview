@@ -188,24 +188,24 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 			if (position == Position.BOTTOM) {
 				var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.BOTTOM);
 
-				positions[Position.BOTTOM] = Math.round(100 * (hubValue / 65535));
+				positions[Position.BOTTOM] = Math.round(100 * hubValue / 65535);
 				this.log("%s/%d = %d (%d)", shade.id, Position.BOTTOM, positions[Position.BOTTOM], hubValue);
 
 				if (current)
-					service.setCharacteristic(Characteristic.CurrentPosition, position);
-				service.updateCharacteristic(Characteristic.TargetPosition, position);
+					service.setCharacteristic(Characteristic.CurrentPosition, positions[Position.BOTTOM]);
+				service.updateCharacteristic(Characteristic.TargetPosition, positions[Position.BOTTOM]);
 				service.setCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
 			}
 
 			if (position == Position.TOP && accessory.context.shadeType == Shade.DUETTE) {
 				var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
 
-				positions[Position.TOP] = Math.round(100 * (hubValue / 65535));
+				positions[Position.TOP] = Math.round(100 * hubValue / 65535);
 				this.log("%s/%d = %d (%d)", shade.id, Position.TOP, positions[Position.TOP], hubValue);
 
 				if (current)
-					service.setCharacteristic(Characteristic.CurrentPosition, position);
-				service.updateCharacteristic(Characteristic.TargetPosition, position);
+					service.setCharacteristic(Characteristic.CurrentPosition, positions[Position.TOP]);
+				service.updateCharacteristic(Characteristic.TargetPosition, positions[Position.TOP]);
 				service.setCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
 			}
 		}
