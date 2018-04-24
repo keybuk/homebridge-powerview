@@ -115,7 +115,7 @@ PowerViewPlatform.prototype.useShadeAccessory = function(accessory, shade) {
 
 	if (shade) {
 		this.shades[shadeId].data = shade;
-		this.setShade(shadeId, shade);
+		this.updateShadeValues(shade);
 	} else {
 		// FIXME we don't wait for this callback
 		this.updateShade(shadeId);
@@ -171,7 +171,7 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 					newShades[shade.id] = this.shades[shade.id];
 				}
 
-				this.setShade(shade.id, shade);
+				this.updateShadeValues(shade);
 			}
 
 			for (var shadeId in this.shades) {
@@ -191,7 +191,7 @@ PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 	thus.hub.getShade(shadeId, function(err, shade) {
 		if (!err) {
 			this.log("Update response: %s", shadeId);
-			this.setShade(shadeId, shade);
+			this.updateShadeValues(shade);
 			if (callback) callback(null, shade);
 		} else {
 			if (callback) callback(err);
@@ -199,17 +199,17 @@ PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 	}.bind(this));
 }
 
-// Update the cached data and characteristic values for a shade.
-PowerViewPlatform.prototype.setShade = function(shadeId, shade) {
-	var accessory = this.shades[shadeId].accessory;
-	this.shades[shadeId].data = shade;
+// Updates the values of shade accessory characteristics.
+PowerViewPlatform.prototype.updateShadeValues = function(shade) {
+	var accessory = this.shades[shade.id].accessory;
+	this.shades[shade.id].data = shade;
 
 	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, BottomServiceSubtype);
 	if (service != null && shade.positions.position1 != null) {
 		var position = Math.round(100 * (shade.positions.position1 / 65535));
-		this.shades[shadeId].positions[1] = position;
+		this.shades[shade.id].positions[1] = position;
 
-		this.log("now %s/%d = %d (%d)", shadeId, 1, position, shade.positions.position1);
+		this.log("now %s/%d = %d (%d)", shade.id, 1, position, shade.positions.position1);
 
 		service.updateCharacteristic(Characteristic.CurrentPosition, position);
 		service.updateCharacteristic(Characteristic.TargetPosition, position);
@@ -218,9 +218,9 @@ PowerViewPlatform.prototype.setShade = function(shadeId, shade) {
 	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, TopServiceSubtype);
 	if (service != null && shade.positions.position2 != null) {
 		var position = Math.round(100 * (shade.positions.position2 / 65535));
-		this.shades[shadeId].positions[2] = position;
+		this.shades[shade.id].positions[2] = position;
 
-		this.log("now %s/%d = %d (%d)", shadeId, 2, position, shade.positions.position2);
+		this.log("now %s/%d = %d (%d)", shade.id, 2, position, shade.positions.position2);
 
 		service.updateCharacteristic(Characteristic.CurrentPosition, position);
 		service.updateCharacteristic(Characteristic.TargetPosition, position);
@@ -259,7 +259,7 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, position, value, cal
 
 	this.hub.putShadePosition(shadeId, position, hubValue, function(err, shade) {
 		if (!err) {
-			this.setShade(shadeId, shade);
+			this.updateShadeValues(shade);
 			callback(null);
 		} else {
 			callback(err);
