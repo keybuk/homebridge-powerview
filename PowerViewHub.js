@@ -100,12 +100,30 @@ PowerViewHub.prototype.getShades = function(callback) {
 }
 
 // Makes a shades API request for a single shade.
-PowerViewHub.prototype.getShade = function(shadeId, callback) {
+PowerViewHub.prototype.getShade = function(shadeId, refresh = false, callback) {
+	// Refresh is handled through queued requests, because the PowerView hub likes to
+	// crash if we send too many of these at once.
+	if (refresh) {
+		for (var queued of this.queue) {
+			if (queued.shadeId == shadeId && queued.qs) {
+				queued.callbacks.push(callback);
+				return;
+			}
+		}
+
+		var queued = {
+			'shadeId': shadeId,
+			'qs': { 'refresh': 'true' },
+			'callbacks': [callback]
+		}
+		this.queueRequest(queued);
+		return;
+	}
+
 	request.get({
-		url: "http://" + this.host + "/api/shades/" + shadeId,
+		url: "http://" + this.host + "/api/shades/" + shadeId
 	}, function(err, response, body) {
 		if (!err && response.statusCode == 200) {
-			this.log("Received shade information: %s", shadeId);
 			var json = JSON.parse(body);
 
 			if (callback) callback(null, json.shade);

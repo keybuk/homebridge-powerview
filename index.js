@@ -289,11 +289,12 @@ PowerViewPlatform.prototype.updateHubInfo = function(callback) {
 }
 
 // Gets the current shade information, and updates values.
-PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
-	thus.hub.getShade(shadeId, function(err, shade) {
+PowerViewPlatform.prototype.updateShade = function(shadeId, refresh = false, callback) {
+	this.hub.getShade(shadeId, refresh, function(err, shade) {
 		if (!err) {
 			var positions = this.updateShadeValues(shade);
-			if (callback) callback(null, positions);
+			var timedOut = refresh ? shade.timedOut : null;
+			if (callback) callback(null, positions, timedOut);
 		} else {
 			if (callback) callback(err);
 		}
@@ -317,11 +318,14 @@ PowerViewPlatform.prototype.jogShade = function(shadeId, callback) {
 PowerViewPlatform.prototype.getPosition = function(shadeId, position, callback) {
 	this.log("getPosition %s/%d", shadeId, position);
 
-	this.updateShade(shadeId, function(err, positions) {
-		if (!err) {
+	this.updateShade(shadeId, true, function(err, positions, timedOut) {
+		if (!err && positions && !timedOut) {
 			callback(null, positions[position]);
-		} else {
+		} else if (err) {
 			callback(err);
+		} else {
+			this.log("Timeout for %s/%d", shadeId, position);
+			callback(new Error("Timed out"));
 		}
 	}.bind(this));
 }
