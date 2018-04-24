@@ -352,6 +352,25 @@ PowerViewPlatform.prototype.updateShade = function(shadeId, refresh = false, cal
 	}.bind(this));
 }
 
+// Gets a single shade position, updating values along the way.
+PowerViewPlatform.prototype.updatePosition = function(shadeId, position, refresh = false, callback) {
+	this.updateShade(shadeId, refresh, function(err, positions, timedOut) {
+		if (!err) {
+			// Treat a number of other issues as errors.
+			if (refresh && timedOut) {
+				this.log("Timeout for %s/%d", shadeId, position);
+				if (callback) callback(new Error("Timed out"));
+			} else if (!positions) {
+				if (callback) callback(new Error("Positions not available"));
+			} else {
+				if (callback) callback(null, positions[position]);
+			}
+		} else {
+			if (callback) callback(err);
+		}
+	}.bind(this));
+}
+
 // Jogs the shade to update the shade information, and updates values.
 PowerViewPlatform.prototype.jogShade = function(shadeId, callback) {
 	this.hub.jogShade(shadeId, function(err, shade) {
@@ -369,14 +388,17 @@ PowerViewPlatform.prototype.jogShade = function(shadeId, callback) {
 PowerViewPlatform.prototype.getPosition = function(shadeId, position, callback) {
 	this.log("getPosition %s/%d", shadeId, position);
 
-	this.updateShade(shadeId, this.refreshShades, function(err, positions, timedOut) {
-		if (!err && positions && !timedOut) {
-			callback(null, positions[position]);
-		} else if (err) {
-			callback(err);
+	this.updatePosition(shadeId, position, this.refreshShades, function(err, value) {
+		if (!err) {
+			// If we're not refreshing by default, try again with a refresh.
+			if (!this.refreshShades && value == null) {
+				this.log("refresh %s/%d", shadeId, position);
+				this.updatePosition(shadeId, position, true, callback);
+			} else {
+				callback(null, value);
+			}
 		} else {
-			this.log("Timeout for %s/%d", shadeId, position);
-			callback(new Error("Timed out"));
+			callback(err);
 		}
 	}.bind(this));
 }
