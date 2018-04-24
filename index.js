@@ -20,14 +20,8 @@ let Position = {
 
 // TODO:
 // - HomeKit meta-data:
-//   Manufacturer
 //   Serial Number
 //   Model
-// - firmware version in shadeData:
-//    "firmware": { "build": 0, "index": 32, "revision": 2, "subRevision": 1 },
-//    = 2.1.0
-//     "firmware": { "build": 1944, "revision": 1, "subRevision": 8 },
-//    = 1.8.1944
 // - battery status in shadeData:
 //   "batteryStatus": 3,
 //   "batteryStrength": 182,
@@ -216,6 +210,18 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 				service.updateCharacteristic(Characteristic.TargetPosition, position);
 				service.updateCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
 			}
+		}
+	}
+
+	accessory.getService(Service.AccessoryInformation)
+		.setCharacteristic(Characteristic.Manufacturer, "Hunter Douglas");
+
+	if (shade.firmware) {
+		with (shade.firmware) {
+			var version = revision.toString() + "." + subRevision.toString() + "." + build.toString();
+
+			accessory.getService(Service.AccessoryInformation)
+				.updateCharacteristic(Characteristic.FirmwareRevision, version);
 		}
 	}
 
