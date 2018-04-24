@@ -1,5 +1,10 @@
 # homebridge-powerview
-Homebridge plugin for Hunter Douglas PowerView shades.
+[![npm](https://img.shields.io/npm/v/homebridge-powerview.svg)](https://www.npmjs.com/package/homebridge-powerview)
+[![npm](https://img.shields.io/npm/dt/homebridge-powerview.svg)](https://www.npmjs.com/package/homebridge-powerview)
+
+This is a plugin for [Homebridge](https://github.com/nfarina/homebridge) to provide [HomeKit](https://www.apple.com/uk/ios/home/) support for [Hunter Douglas PowerView](https://www.hunterdouglas.com/operating-systems/motorized/powerview-motorization) window shades.
+
+You can download it from [npm](https://www.npmjs.com/package/homebridge-powerview).
 
 Supports:
 
@@ -11,7 +16,7 @@ Supports:
 
 1. Install and setup [Homebridge](https://github.com/nfarina/homebridge).
 
-2. Install this plugin directly from git:
+2. Install this plugin:
 ```
 npm install -g homebridge-powerview
 ```
