@@ -189,10 +189,9 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 			var hubValue = shade.positions['position'+i];
 
 			if (position == Position.BOTTOM) {
-				var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.BOTTOM);
-
 				positions[Position.BOTTOM] = Math.round(100 * hubValue / 65535);
-				this.log("%s/%d = %d (%d)", shade.id, Position.BOTTOM, positions[Position.BOTTOM], hubValue);
+
+				var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.BOTTOM);
 
 				if (current)
 					service.setCharacteristic(Characteristic.CurrentPosition, positions[Position.BOTTOM]);
@@ -200,11 +199,11 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 				service.setCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
 			}
 
-			if (position == Position.TOP && accessory.context.shadeType == Shade.DUETTE) {
-				var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
 
+			if (position == Position.TOP && accessory.context.shadeType == Shade.DUETTE) {
 				positions[Position.TOP] = Math.round(100 * hubValue / 65535);
-				this.log("%s/%d = %d (%d)", shade.id, Position.TOP, positions[Position.TOP], hubValue);
+
+				var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
 
 				if (current)
 					service.setCharacteristic(Characteristic.CurrentPosition, positions[Position.TOP]);
