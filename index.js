@@ -289,7 +289,14 @@ PowerViewPlatform.prototype.getPosition = function(shadeId, position, callback) 
 // Characteristic callback for TargetPosition.set
 PowerViewPlatform.prototype.setPosition = function(shadeId, position, value, callback) {
 	this.log("setPosition %s/%d = %d", shadeId, position, value);
-	var hubValue = Math.round(65535 * (value / 100));
+	switch (position) {
+		case Position.BOTTOM:
+			var hubValue = Math.round(65535 * value / 100);
+			break;
+		case Position.TOP:
+			var hubValue = Math.round(65535 * value / 100);
+			break;
+	}
 
 	this.hub.putShadePosition(shadeId, position, hubValue, function(err, shade) {
 		if (!err) {
