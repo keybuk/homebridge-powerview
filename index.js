@@ -150,6 +150,32 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 	}
 }
 
+// Updates the values of shade accessory characteristics.
+PowerViewPlatform.prototype.updateShadeValues = function(shade) {
+	var accessory = this.accessories[shade.id];
+	var positions = {};
+
+	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, BottomServiceSubtype);
+	if (service != null && shade.positions.position1 != null) {
+		positions[1] = Math.round(100 * (shade.positions.position1 / 65535));
+		this.log("now %s/%d = %d (%d)", shade.id, 1, positions[1], shade.positions.position1);
+
+		service.updateCharacteristic(Characteristic.CurrentPosition, position);
+		service.updateCharacteristic(Characteristic.TargetPosition, position);
+	}
+
+	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, TopServiceSubtype);
+	if (service != null && shade.positions.position2 != null) {
+		positions[2] = Math.round(100 * (shade.positions.position2 / 65535));
+		this.log("now %s/%d = %d (%d)", shade.id, 2, positions[2], shade.positions.position2);
+
+		service.updateCharacteristic(Characteristic.CurrentPosition, position);
+		service.updateCharacteristic(Characteristic.TargetPosition, position);
+	}
+
+	return positions;
+}
+
 
 // Gets the current set of shades, and updates the accessories.
 PowerViewPlatform.prototype.updateShades = function(callback) {
@@ -177,6 +203,17 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 	}.bind(this));
 }
 
+// Regularly poll shades for changes.
+PowerViewPlatform.prototype.pollShades = function() {
+	if (ShadePollIntervalMs != null) {
+		setTimeout(function() {
+			this.updateShades(function(err) {
+				this.pollShades();
+			}.bind(this));
+		}.bind(this), ShadePollIntervalMs);
+	}
+}
+
 // Gets the current shade information, and updates values.
 PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 	thus.hub.getShade(shadeId, function(err, shade) {
@@ -187,43 +224,6 @@ PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 			if (callback) callback(err);
 		}
 	}.bind(this));
-}
-
-// Updates the values of shade accessory characteristics.
-PowerViewPlatform.prototype.updateShadeValues = function(shade) {
-	var accessory = this.accessories[shade.id];
-	var positions = {};
-
-	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, BottomServiceSubtype);
-	if (service != null && shade.positions.position1 != null) {
-		positions[1] = Math.round(100 * (shade.positions.position1 / 65535));
-		this.log("now %s/%d = %d (%d)", shade.id, 1, positions[1], shade.positions.position1);
-
-		service.updateCharacteristic(Characteristic.CurrentPosition, position);
-		service.updateCharacteristic(Characteristic.TargetPosition, position);
-	}
-
-	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, TopServiceSubtype);
-	if (service != null && shade.positions.position2 != null) {
-		positions[2] = Math.round(100 * (shade.positions.position2 / 65535));
-		this.log("now %s/%d = %d (%d)", shade.id, 2, positions[2], shade.positions.position2);
-
-		service.updateCharacteristic(Characteristic.CurrentPosition, position);
-		service.updateCharacteristic(Characteristic.TargetPosition, position);
-	}
-
-	return positions;
-}
-
-// Regularly poll shades for changes.
-PowerViewPlatform.prototype.pollShades = function() {
-	if (ShadePollIntervalMs != null) {
-		setTimeout(function() {
-			this.updateShades(function(err) {
-				this.pollShades();
-			}.bind(this));
-		}.bind(this), ShadePollIntervalMs);
-	}
 }
 
 
