@@ -80,7 +80,7 @@ PowerViewPlatform.prototype.shadeType = function(shade) {
 
 // Called when a cached accessory is loaded to set up callbacks.
 PowerViewPlatform.prototype.configureAccessory = function(accessory) {
-	this.log("Cached shade %s: %s", accessory.context.shadeId, accessory.displayName);
+	this.log("Cached shade %d: %s", accessory.context.shadeId, accessory.displayName);
 
 	accessory.reachable = true;
 
@@ -100,7 +100,7 @@ PowerViewPlatform.prototype.configureAccessory = function(accessory) {
 // Adds a new shade accessory.
 PowerViewPlatform.prototype.addShadeAccessory = function(shade) {
 	var name = Buffer.from(shade.name, 'base64').toString();
-	this.log("Adding shade %s: %s", shade.id, name);
+	this.log("Adding shade %d: %s", shade.id, name);
 
 	var uuid = UUIDGen.generate(name);
 
@@ -117,7 +117,7 @@ PowerViewPlatform.prototype.addShadeAccessory = function(shade) {
 // Updates an existing shade accessory.
 PowerViewPlatform.prototype.updateShadeAcccessory = function(shade) {
 	var accessory = this.accessories[shade.id];
-	this.log("Updating shade %s: %s", shade.id, accessory.displayName);
+	this.log("Updating shade %d: %s", shade.id, accessory.displayName);
 
 	var newType = this.shadeType(shade);
 	if (newType != accessory.context.shadeType) {
@@ -132,7 +132,7 @@ PowerViewPlatform.prototype.updateShadeAcccessory = function(shade) {
 
 // Removes an accessory from the platform.
 PowerViewPlatform.prototype.removeShadeAccessory = function(accessory) {
-	this.log("Removing shade %s: %s", accessory.context.shadeId, accessory.displayName);
+	this.log("Removing shade %d: %s", accessory.context.shadeId, accessory.displayName);
 	this.api.unregisterPlatformAccessories("homebridge-powerview", "PowerView", [accessory]);
 
 	delete this.accessories[accessory.context.shadeId];
@@ -331,7 +331,7 @@ PowerViewPlatform.prototype.updateHubInfo = function(callback) {
 			this.log("Hub: %s", this.hubName);
 
 			for (var shadeId in this.accessories) {
-				this.updateShadeValues({ id: shadeId });
+				this.updateShadeValues({ id: parseInt(shadeId) });
 			}
 		}
 
@@ -358,7 +358,7 @@ PowerViewPlatform.prototype.updatePosition = function(shadeId, position, refresh
 		if (!err) {
 			// Treat a number of other issues as errors.
 			if (refresh && timedOut) {
-				this.log("Timeout for %s/%d", shadeId, position);
+				this.log("Timeout for %d/%d", shadeId, position);
 				if (callback) callback(new Error("Timed out"));
 			} else if (!positions) {
 				if (callback) callback(new Error("Positions not available"));
@@ -386,13 +386,13 @@ PowerViewPlatform.prototype.jogShade = function(shadeId, callback) {
 
 // Characteristic callback for CurrentPosition.get
 PowerViewPlatform.prototype.getPosition = function(shadeId, position, callback) {
-	this.log("getPosition %s/%d", shadeId, position);
+	this.log("getPosition %d/%d", shadeId, position);
 
 	this.updatePosition(shadeId, position, this.refreshShades, function(err, value) {
 		if (!err) {
 			// If we're not refreshing by default, try again with a refresh.
 			if (!this.refreshShades && value == null) {
-				this.log("refresh %s/%d", shadeId, position);
+				this.log("refresh %d/%d", shadeId, position);
 				this.updatePosition(shadeId, position, true, callback);
 			} else {
 				callback(null, value);
@@ -405,7 +405,7 @@ PowerViewPlatform.prototype.getPosition = function(shadeId, position, callback) 
 
 // Characteristic callback for TargetPosition.set
 PowerViewPlatform.prototype.setPosition = function(shadeId, position, value, callback) {
-	this.log("setPosition %s/%d = %d", shadeId, position, value);
+	this.log("setPosition %d/%d = %d", shadeId, position, value);
 	switch (position) {
 		case Position.BOTTOM:
 			var hubValue = Math.round(65535 * value / 100);
