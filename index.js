@@ -19,9 +19,6 @@ let Position = {
 }
 
 // TODO:
-// - HomeKit meta-data:
-//   Serial Number
-//   Model
 // - battery status in shadeData:
 //   "batteryStatus": 3,
 //   "batteryStrength": 182,
@@ -53,6 +50,7 @@ function PowerViewPlatform(log, config, api) {
 
 		this.api.on('didFinishLaunching', function() {
 			this.updateShades();
+			this.updateHubInfo();
 		}.bind(this));
 	}
 }
@@ -213,16 +211,25 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 		}
 	}
 
-	accessory.getService(Service.AccessoryInformation)
-		.setCharacteristic(Characteristic.Manufacturer, "Hunter Douglas");
+	// Set the AccessoryInformation service.
+	var service = accessory.getService(Service.AccessoryInformation);
+	service.setCharacteristic(Characteristic.Manufacturer, "Hunter Douglas");
 
 	if (shade.firmware) {
 		with (shade.firmware) {
 			var version = revision.toString() + "." + subRevision.toString() + "." + build.toString();
 
-			accessory.getService(Service.AccessoryInformation)
-				.updateCharacteristic(Characteristic.FirmwareRevision, version);
+			service.setCharacteristic(Characteristic.FirmwareRevision, version);
 		}
+	}
+
+
+	if (this.hubVersion) {
+		service.setCharacteristic(Characteristic.Model, this.hubVersion);
+	}
+
+	if (this.hubSerialNumber) {
+		service.setCharacteristic(Characteristic.SerialNumber, this.hubSerialNumber);
 	}
 
 	return positions;
@@ -264,6 +271,25 @@ PowerViewPlatform.prototype.pollShades = function() {
 			}.bind(this));
 		}.bind(this), ShadePollIntervalMs);
 	}
+}
+
+// Gets the hub information, and updates the accessories.
+PowerViewPlatform.prototype.updateHubInfo = function(callback) {
+	this.hub.getUserData(function(err, userData) {
+		if (!err) {
+			this.hubName = Buffer.from(userData.hubName, 'base64').toString();
+			this.hubSerialNumber = userData.serialNumber;
+			this.hubVersion = userData.firmware.mainProcessor.name;
+
+			this.log("Hub: %s", this.hubName);
+
+			for (var shadeId in this.accessories) {
+				this.updateShadeValues({ id: shadeId });
+			}
+		}
+
+		if (callback) callback(err);
+	}.bind(this));
 }
 
 // Gets the current shade information, and updates values.

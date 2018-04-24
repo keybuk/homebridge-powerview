@@ -15,6 +15,22 @@ function PowerViewHub(log, host) {
 	this.queue = [];
 }
 
+// Makes a userdata API request.
+PowerViewHub.prototype.getUserData = function(callback) {
+	request.get({
+		url: "http://" + this.host + "/api/userdata"
+	}, function(err, response, body) {
+		if (!err && response.statusCode == 200) {
+			var json = JSON.parse(body);
+
+			if (callback) callback(null, json.userData);
+		} else {
+			this.log("Error getting userdata (status code %s): %s", response ? response.statusCode : "-", err);
+			if (callback) callback(err);
+		}
+	}.bind(this));
+}
+
 // Makes a shades API request.
 PowerViewHub.prototype.getShades = function(callback) {
 	request.get({
