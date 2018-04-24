@@ -44,7 +44,7 @@ function PowerViewPlatform(log, config, api) {
 	this.config = config;
 	this.api = api;
 
-	this.shades = [];
+	this.accessories = [];
 
 	if (config) {
 		var host = config["host"] || 'powerview-hub.local';
@@ -101,7 +101,7 @@ PowerViewPlatform.prototype.removeShadeAccessory = function(accessory) {
 	this.log("Removing shade %s: %s", accessory.context.shadeId, accessory.displayName);
 	this.api.unregisterPlatformAccessories("homebridge-powerview", "PowerView", [accessory]);
 
-	delete this.shades[accessory.context.shadeId];
+	delete this.accessories[accessory.context.shadeId];
 }
 
 // Set up callbacks for a shade accessory.
@@ -109,8 +109,7 @@ PowerViewPlatform.prototype.useShadeAccessory = function(accessory, shade) {
 	this.log("Use accessory %s", accessory.displayName);
 
 	var shadeId = accessory.context.shadeId;
-	this.shades[shadeId] = [];
-	this.shades[shadeId].accessory = accessory;
+	this.accessories[shadeId] = accessory;
 
 	if (shade) {
 		this.updateShadeValues(shade);
@@ -161,21 +160,21 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 		if (!err) {
 			var newShades = [];
 			for (var shade of shadeData) {
-				if (!this.shades[shade.id]) {
+				if (!this.accessories[shade.id]) {
 					this.log("Found new shade: %s", shade.id);
 					newShades[shade.id] = this.addShadeAccessory(shade);
 				} else {
 					this.log("Updating existing shade: %s", shade.id);
-					newShades[shade.id] = this.shades[shade.id];
+					newShades[shade.id] = this.accessories[shade.id];
 				}
 
 				this.updateShadeValues(shade);
 			}
 
-			for (var shadeId in this.shades) {
+			for (var shadeId in this.accessories) {
 				if (!newShades[shadeId]) {
 					this.log("Shade was removed: %s", shadeId);
-					this.removeShadeAccessory(this.shades[shadeId].accessory);
+					this.removeShadeAccessory(this.accessories[shadeId]);
 				}
 			}
 		}
@@ -198,7 +197,7 @@ PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 
 // Updates the values of shade accessory characteristics.
 PowerViewPlatform.prototype.updateShadeValues = function(shade) {
-	var accessory = this.shades[shade.id].accessory;
+	var accessory = this.accessories[shade.id];
 	var positions = {};
 
 	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, BottomServiceSubtype);
