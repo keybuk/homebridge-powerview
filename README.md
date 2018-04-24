@@ -1,6 +1,12 @@
 # homebridge-powerview
 Homebridge plugin for Hunter Douglas PowerView shades.
 
+Supports:
+
+ * Roller Shades.
+ * Duette Top-Down/Bottom-Up Shades. You will get two accessories, one for the bottom of the shade, and one of the top. They can be controlled independently or combined using HomeKit scenes,
+ * Silhouette Shades with Vanes. The main accessory controls the vertical movement of the shades, and a slider under Details controls the tilt of the vanes. They can be controlled independently or combined using HomeKit scenes.
+
 ## Installation
 
 1. Install and setup [Homebridge](https://github.com/nfarina/homebridge).
