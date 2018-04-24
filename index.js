@@ -111,7 +111,6 @@ PowerViewPlatform.prototype.useShadeAccessory = function(accessory, shade) {
 	var shadeId = accessory.context.shadeId;
 	this.shades[shadeId] = [];
 	this.shades[shadeId].accessory = accessory;
-	this.shades[shadeId].positions = [];
 
 	if (shade) {
 		this.shades[shadeId].data = shade;
@@ -190,9 +189,8 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 	thus.hub.getShade(shadeId, function(err, shade) {
 		if (!err) {
-			this.log("Update response: %s", shadeId);
-			this.updateShadeValues(shade);
-			if (callback) callback(null, shade);
+			var positions = this.updateShadeValues(shade);
+			if (callback) callback(null, positions);
 		} else {
 			if (callback) callback(err);
 		}
@@ -203,13 +201,12 @@ PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 PowerViewPlatform.prototype.updateShadeValues = function(shade) {
 	var accessory = this.shades[shade.id].accessory;
 	this.shades[shade.id].data = shade;
+	var positions = {};
 
 	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, BottomServiceSubtype);
 	if (service != null && shade.positions.position1 != null) {
-		var position = Math.round(100 * (shade.positions.position1 / 65535));
-		this.shades[shade.id].positions[1] = position;
-
-		this.log("now %s/%d = %d (%d)", shade.id, 1, position, shade.positions.position1);
+		positions[1] = Math.round(100 * (shade.positions.position1 / 65535));
+		this.log("now %s/%d = %d (%d)", shade.id, 1, positions[1], shade.positions.position1);
 
 		service.updateCharacteristic(Characteristic.CurrentPosition, position);
 		service.updateCharacteristic(Characteristic.TargetPosition, position);
@@ -217,14 +214,14 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade) {
 
 	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, TopServiceSubtype);
 	if (service != null && shade.positions.position2 != null) {
-		var position = Math.round(100 * (shade.positions.position2 / 65535));
-		this.shades[shade.id].positions[2] = position;
-
-		this.log("now %s/%d = %d (%d)", shade.id, 2, position, shade.positions.position2);
+		positions[2] = Math.round(100 * (shade.positions.position2 / 65535));
+		this.log("now %s/%d = %d (%d)", shade.id, 2, positions[2], shade.positions.position2);
 
 		service.updateCharacteristic(Characteristic.CurrentPosition, position);
 		service.updateCharacteristic(Characteristic.TargetPosition, position);
 	}
+
+	return positions;
 }
 
 // Regularly poll shades for changes.
@@ -243,9 +240,9 @@ PowerViewPlatform.prototype.pollShades = function() {
 PowerViewPlatform.prototype.getPosition = function(shadeId, positionId, callback) {
 	this.log("getPosition %s/%d", shadeId, positionId);
 
-	this.updateShade(shadeId, function(err, shade) {
+	this.updateShade(shadeId, function(err, positions) {
 		if (!err) {
-			callback(null, this.shades[shadeId].positions[positionId]);
+			callback(null, positions[positionId]);
 		} else {
 			callback(err);
 		}
