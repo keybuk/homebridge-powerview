@@ -113,7 +113,6 @@ PowerViewPlatform.prototype.useShadeAccessory = function(accessory, shade) {
 	this.shades[shadeId].accessory = accessory;
 
 	if (shade) {
-		this.shades[shadeId].data = shade;
 		this.updateShadeValues(shade);
 	} else {
 		// FIXME we don't wait for this callback
@@ -200,7 +199,6 @@ PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 // Updates the values of shade accessory characteristics.
 PowerViewPlatform.prototype.updateShadeValues = function(shade) {
 	var accessory = this.shades[shade.id].accessory;
-	this.shades[shade.id].data = shade;
 	var positions = {};
 
 	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, BottomServiceSubtype);
