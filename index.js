@@ -300,6 +300,18 @@ PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 	}.bind(this));
 }
 
+// Jogs the shade to update the shade information, and updates values.
+PowerViewPlatform.prototype.jogShade = function(shadeId, callback) {
+	this.hub.jogShade(shadeId, function(err, shade) {
+		if (!err) {
+			var positions = this.updateShadeValues(shade);
+			if (callback) callback(null, positions);
+		} else {
+			if (callback) callback(err);
+		}
+	}.bind(this));
+}
+
 
 // Characteristic callback for CurrentPosition.get
 PowerViewPlatform.prototype.getPosition = function(shadeId, position, callback) {
