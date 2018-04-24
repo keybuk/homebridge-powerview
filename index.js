@@ -11,6 +11,12 @@ let Shade = {
 	SILHOUETTE: 3
 }
 
+let ShadeTypes = {
+	ROLLER: [ 5, 42 ],
+	DUETTE: [ 8 ],
+	SILHOUETTE: [ 23 ]
+}
+
 let SubType = {
 	BOTTOM: 'bottom',
 	TOP: 'top'
@@ -50,6 +56,10 @@ function PowerViewPlatform(log, config, api) {
 		this.refreshShades = config["refreshShades"] ? true : false;
 		this.pollShadesForUpdate = config["pollShadesForUpdate"] ? true : false;
 
+		this.forceRollerShades = config["forceRollerShades"] || [];
+		this.forceDuetteShades = config["forceDuetteShades"] || [];
+		this.forceSilhouetteShades = config["forceSilhouetteShades"] || [];
+
 		this.api.on('didFinishLaunching', function() {
 			this.updateHubInfo();
 			if (this.pollShadesForUpdate) {
@@ -63,18 +73,22 @@ function PowerViewPlatform(log, config, api) {
 
 // Returns the Shade type from the given shade data.
 PowerViewPlatform.prototype.shadeType = function(shade) {
-	switch (shade.type) {
-		case 5:
-		case 42:
-			return Shade.ROLLER;
-		case 8:
-			return Shade.DUETTE;
-		case 23:
-			return Shade.SILHOUETTE;
-		default:
-			this.log("Unknown shade type %d, assuming roller", shade.type);
-			return Shade.ROLLER
-	}
+	if (this.forceRollerShades.includes(shade.id))
+		return Shade.ROLLER;
+	if (this.forceDuetteShades.includes(shade.id))
+		return Shade.DUETTE;
+	if (this.forceSilhouetteShades.includes(shade.id))
+		return Shade.SILHOUETTE;
+
+	if (ShadeTypes.ROLLER.includes(shade.type))
+		return Shade.ROLLER;
+	if (ShadeTypes.DUETTE.includes(shade.type))
+		return Shade.DUETTE;
+	if (ShadeTypes.SILHOUETTE.includes(shade.type))
+		return Shade.SILHOUETTE;
+
+	this.log("*** Shade %d has unknown type %d, assuming roller ***", shade.id, shade.type);
+	return Shade.ROLLER
 }
 
 
