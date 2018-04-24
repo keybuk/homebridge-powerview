@@ -68,14 +68,6 @@ PowerViewPlatform.prototype.configureAccessory = function(accessory) {
  	this.useShadeAccessory(accessory);
 }
 
-// Call to remove an accessory from the platform.
-PowerViewPlatform.prototype.removeAccessory = function(accessory) {
-	this.log("Removing accessory %s", accessory.displayName);
-	this.api.unregisterPlatformAccessories("homebridge-powerview", "PowerView", [accessory]);
-
-	this.shades[accessory.context.shadeId] = null;
-}
-
 // Adds a new shade accessory.
 PowerViewPlatform.prototype.addShadeAccessory = function(shade) {
 	var name = Buffer.from(shade.name, 'base64').toString();
@@ -102,6 +94,14 @@ PowerViewPlatform.prototype.addShadeAccessory = function(shade) {
 	this.api.registerPlatformAccessories("homebridge-powerview", "PowerView", [accessory]);
 
 	return accessory;
+}
+
+// Removes an accessory from the platform.
+PowerViewPlatform.prototype.removeShadeAccessory = function(accessory) {
+	this.log("Removing shade %s: %s", accessory.context.shadeId, accessory.displayName);
+	this.api.unregisterPlatformAccessories("homebridge-powerview", "PowerView", [accessory]);
+
+	delete this.shades[accessory.context.shadeId];
 }
 
 // Set up callbacks for a shade accessory.
@@ -177,7 +177,7 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 			for (var shadeId in this.shades) {
 				if (!newShades[shadeId]) {
 					this.log("Shade was removed: %s", shadeId);
-					this.removeAccessory(this.shades[shadeId].accessory);
+					this.removeShadeAccessory(this.shades[shadeId].accessory);
 				}
 			}
 		}
