@@ -52,7 +52,7 @@ If your PowerView hub is configured with a different default hostname, you can s
 The plugin uses the information from the PowerView hub to determine the types of shades, however it doesn't yet know all of the possible values. You may see the following warning in your log:
 
 ```
-*** Shade 12345 has unknown type 99, assuming roller ***
+*** Shade 12345 has unknown type 66, assuming roller ***
 ```
 
 If you see this, first please file an issue and provide details about the kind of shade that this is, so I can correctly recognize it in future versions.
@@ -60,5 +60,5 @@ If you see this, first please file an issue and provide details about the kind o
 You can then add a `forceRollerShades`, `forceTopBottomShades`, `forceHorizontalShades`, or `forceVerticalShades` key to your `config.json` to force shades to be a certain type, e.g.:
 
 ```
-"forceTopBottomShades": [ 12345, 99999 ]
+"forceTopBottomShades": [ 12345, 98765 ]
 ```
