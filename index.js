@@ -3,8 +3,10 @@ var Accessory, Service, Characteristic, UUIDGen;
 
 let ShadePollIntervalMs = null; //30000;
 
-let BottomServiceSubtype = 'bottom';
-let TopServiceSubtype = 'top';
+let SubType = {
+	BOTTOM: 'bottom',
+	TOP: 'top'
+}
 
 // TODO:
 // - HomeKit meta-data:
@@ -84,10 +86,10 @@ PowerViewPlatform.prototype.addShadeAccessory = function(shade) {
 
 	// FIXME this should move into useShadeAccessory
 	if (shade.positions.posKind2 == 2) {
-		accessory.addService(Service.WindowCovering, name, BottomServiceSubtype);
-		accessory.addService(Service.WindowCovering, name, TopServiceSubtype);
+		accessory.addService(Service.WindowCovering, name, SubType.BOTTOM);
+		accessory.addService(Service.WindowCovering, name, SubType.TOP);
 	} else {
-		accessory.addService(Service.WindowCovering, name, BottomServiceSubtype);
+		accessory.addService(Service.WindowCovering, name, SubType.BOTTOM);
 	}
 
 	this.configureShadeAccessory(accessory);
@@ -117,7 +119,7 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 	var shadeId = accessory.context.shadeId;
 	this.accessories[shadeId] = accessory;
 
-	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, BottomServiceSubtype);
+	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.BOTTOM);
 	if (service != null) {
 		service
 			.getCharacteristic(Characteristic.CurrentPosition)
@@ -133,7 +135,7 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 			.on('get', this.getState.bind(this, accessory.context.shadeId, 1));
 	}
 
-	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, TopServiceSubtype);
+	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
 	if (service != null) {
 		service
 			.getCharacteristic(Characteristic.CurrentPosition)
@@ -155,7 +157,7 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade) {
 	var accessory = this.accessories[shade.id];
 	var positions = {};
 
-	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, BottomServiceSubtype);
+	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.BOTTOM);
 	if (service != null && shade.positions.position1 != null) {
 		positions[1] = Math.round(100 * (shade.positions.position1 / 65535));
 		this.log("now %s/%d = %d (%d)", shade.id, 1, positions[1], shade.positions.position1);
@@ -164,7 +166,7 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade) {
 		service.updateCharacteristic(Characteristic.TargetPosition, position);
 	}
 
-	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, TopServiceSubtype);
+	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
 	if (service != null && shade.positions.position2 != null) {
 		positions[2] = Math.round(100 * (shade.positions.position2 / 65535));
 		this.log("now %s/%d = %d (%d)", shade.id, 2, positions[2], shade.positions.position2);
