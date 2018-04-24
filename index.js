@@ -131,10 +131,6 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 			.getCharacteristic(Characteristic.TargetPosition)
 			.on('get', this.getPosition.bind(this, accessory.context.shadeId, Position.BOTTOM))
 			.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.BOTTOM));
-
-		service
-			.getCharacteristic(Characteristic.PositionState)
-			.on('get', this.getState.bind(this, accessory.context.shadeId, Position.BOTTOM));
 	}
 
 	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
@@ -147,10 +143,6 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 			.getCharacteristic(Characteristic.TargetPosition)
 			.on('get', this.getPosition.bind(this, accessory.context.shadeId, Position.TOP))
 			.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.TOP));
-
-		service
-			.getCharacteristic(Characteristic.PositionState)
-			.on('get', this.getState.bind(this, accessory.context.shadeId, Position.TOP));
 	}
 }
 
@@ -176,6 +168,7 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 				if (current)
 					service.updateCharacteristic(Characteristic.CurrentPosition, position);
 				service.updateCharacteristic(Characteristic.TargetPosition, position);
+				service.updateCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
 			}
 
 			if (position == Position.TOP) {
@@ -187,7 +180,7 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 				if (current)
 					service.updateCharacteristic(Characteristic.CurrentPosition, position);
 				service.updateCharacteristic(Characteristic.TargetPosition, position);
-
+				service.updateCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
 			}
 		}
 	}
@@ -272,9 +265,4 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, position, value, cal
 			callback(err);
 		}
 	}.bind(this));
-}
-
-PowerViewPlatform.prototype.getState = function(shadeId, position, callback) {
-	this.log("getState %s/%d", shadeId, position);
-	callback(null, Characteristic.PositionState.STOPPED);
 }
