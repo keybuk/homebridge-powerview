@@ -65,7 +65,7 @@ PowerViewPlatform.prototype.configureAccessory = function(accessory) {
 
 	accessory.reachable = true;
 
- 	this.useShadeAccessory(accessory);
+ 	this.configureShadeAccessory(accessory);
 }
 
 // Adds a new shade accessory.
@@ -90,7 +90,7 @@ PowerViewPlatform.prototype.addShadeAccessory = function(shade) {
 		accessory.addService(Service.WindowCovering, name, BottomServiceSubtype);
 	}
 
-	this.useShadeAccessory(accessory, shade);
+	this.configureShadeAccessory(accessory);
 	this.api.registerPlatformAccessories("homebridge-powerview", "PowerView", [accessory]);
 
 	return accessory;
@@ -112,22 +112,11 @@ PowerViewPlatform.prototype.removeShadeAccessory = function(accessory) {
 	delete this.accessories[accessory.context.shadeId];
 }
 
-// Set up callbacks for a shade accessory.
-PowerViewPlatform.prototype.useShadeAccessory = function(accessory, shade) {
-	this.log("Use accessory %s", accessory.displayName);
-
+// Sets up callbacks for a shade accessory.
+PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 	var shadeId = accessory.context.shadeId;
 	this.accessories[shadeId] = accessory;
 
-	if (shade) {
-		this.updateShadeValues(shade);
-	} else {
-		// FIXME we don't wait for this callback
-		this.updateShade(shadeId);
-	}
-
-	// FIXME the services may have changed since last time, wait for the updateShade and add/remove
-	// accessories?
 	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, BottomServiceSubtype);
 	if (service != null) {
 		service
