@@ -228,7 +228,7 @@ PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 				callback(null, json.shade);
 			}
 		} else {
-			this.log("Error getting shade (status code %s): %s", response.statusCode, err);
+			this.log("Error getting shade (status code %s): %s", response ? response.statusCode : "-", err);
 			if (callback != null) {
 				callback(err);
 			}
@@ -340,7 +340,7 @@ PowerViewPlatform.prototype.scheduleSetPosition = function(delay) {
 				var json = body;
 				this.setShade(shadeId, json.shade);
 			} else {
-				this.log("Error setting position (status code %s): %s", response.statusCode, err);
+				this.log("Error setting position (status code %s): %s", response ? response.statusCode : "-", err);
 			}
 
 			this.queue.shift();
