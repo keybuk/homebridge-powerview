@@ -129,7 +129,6 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 
 		service
 			.getCharacteristic(Characteristic.TargetPosition)
-			.on('get', this.getPosition.bind(this, accessory.context.shadeId, Position.BOTTOM))
 			.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.BOTTOM));
 	}
 
@@ -141,7 +140,6 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 
 		service
 			.getCharacteristic(Characteristic.TargetPosition)
-			.on('get', this.getPosition.bind(this, accessory.context.shadeId, Position.TOP))
 			.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.TOP));
 	}
 }
