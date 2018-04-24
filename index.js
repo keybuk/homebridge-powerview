@@ -1,7 +1,7 @@
 var PowerViewHub = require('./PowerViewHub').PowerViewHub;
 var Accessory, Service, Characteristic, UUIDGen;
 
-let ShadePollIntervalMs = null; //30000;
+let ShadePollIntervalMs = 60000;
 
 let Shade = {
 	ROLLER: 1,
@@ -49,10 +49,15 @@ function PowerViewPlatform(log, config, api) {
 		this.hub = new PowerViewHub(log, host);
 
 		this.refreshShades = config["refreshShades"] ? true : false;
+		this.pollShadesForUpdate = config["pollShadesForUpdate"] ? true : false;
 
 		this.api.on('didFinishLaunching', function() {
-			this.updateShades();
 			this.updateHubInfo();
+			if (this.pollShadesForUpdate) {
+				this.pollShades();
+			} else {
+				this.updateShades();
+			}
 		}.bind(this));
 	}
 }
@@ -260,15 +265,13 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 	}.bind(this));
 }
 
-// Regularly poll shades for changes.
+// Regularly polls shades for changes.
 PowerViewPlatform.prototype.pollShades = function() {
-	if (ShadePollIntervalMs != null) {
+	this.updateShades(function() {
 		setTimeout(function() {
-			this.updateShades(function(err) {
-				this.pollShades();
-			}.bind(this));
+			this.pollShades();
 		}.bind(this), ShadePollIntervalMs);
-	}
+	}.bind(this));
 }
 
 // Gets the hub information, and updates the accessories.
