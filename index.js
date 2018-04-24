@@ -157,24 +157,37 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 // Updates the values of shade accessory characteristics.
 PowerViewPlatform.prototype.updateShadeValues = function(shade) {
 	var accessory = this.accessories[shade.id];
-	var positions = {};
 
-	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.BOTTOM);
-	if (service != null && shade.positions.position1 != null) {
-		positions[Position.BOTTOM] = Math.round(100 * (shade.positions.position1 / 65535));
-		this.log("now %s/%d = %d (%d)", shade.id, Position.BOTTOM, positions[Position.BOTTOM], shade.positions.position1);
+	var positions = null;
+	if (shade.positions) {
+		this.log("Set for", shade.id, {'positions': shade.positions});
+		positions = {};
 
-		service.updateCharacteristic(Characteristic.CurrentPosition, position);
-		service.updateCharacteristic(Characteristic.TargetPosition, position);
-	}
+		for (var i = 1; shade.positions['posKind'+i]; ++i) {
+			var position = shade.positions['posKind'+i];
+			var hubValue = shade.positions['position'+i];
 
-	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
-	if (service != null && shade.positions.position2 != null) {
-		positions[Position.TOP] = Math.round(100 * (shade.positions.position2 / 65535));
-		this.log("now %s/%d = %d (%d)", shade.id, Position.TOP, positions[Position.TOP], shade.positions.position2);
+			if (position == Position.BOTTOM) {
+				var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.BOTTOM);
 
-		service.updateCharacteristic(Characteristic.CurrentPosition, position);
-		service.updateCharacteristic(Characteristic.TargetPosition, position);
+				positions[Position.BOTTOM] = Math.round(100 * (hubValue / 65535));
+				this.log("%s/%d = %d (%d)", shade.id, Position.BOTTOM, positions[Position.BOTTOM], hubValue);
+
+				service.updateCharacteristic(Characteristic.CurrentPosition, position);
+				service.updateCharacteristic(Characteristic.TargetPosition, position);
+			}
+
+			if (position == Position.TOP) {
+				var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
+
+				positions[Position.TOP] = Math.round(100 * (hubValue / 65535));
+				this.log("%s/%d = %d (%d)", shade.id, Position.TOP, positions[Position.TOP], hubValue);
+
+				service.updateCharacteristic(Characteristic.CurrentPosition, position);
+				service.updateCharacteristic(Characteristic.TargetPosition, position);
+
+			}
+		}
 	}
 
 	return positions;
