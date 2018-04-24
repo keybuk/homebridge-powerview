@@ -13,7 +13,7 @@ Supports:
 
 2. Install this plugin directly from git:
 ```
-npm install -g keybuk/homebridge-powerview
+npm install -g homebridge-powerview
 ```
 3. Add the `PowerView` Platform to your Homebridge `config.json`:
 
