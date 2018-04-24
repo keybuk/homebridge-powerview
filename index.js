@@ -96,6 +96,14 @@ PowerViewPlatform.prototype.addShadeAccessory = function(shade) {
 	return accessory;
 }
 
+// Updates an existing shade accessory.
+PowerViewPlatform.prototype.updateShadeAcccessory = function(shade) {
+	var accessory = this.accessories[shade.id];
+	this.log("Updating shade %s: %s", shade.id, accessory.displayName);
+
+	return accessory;
+}
+
 // Removes an accessory from the platform.
 PowerViewPlatform.prototype.removeShadeAccessory = function(accessory) {
 	this.log("Removing shade %s: %s", accessory.context.shadeId, accessory.displayName);
@@ -161,11 +169,9 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 			var newShades = [];
 			for (var shade of shadeData) {
 				if (!this.accessories[shade.id]) {
-					this.log("Found new shade: %s", shade.id);
 					newShades[shade.id] = this.addShadeAccessory(shade);
 				} else {
-					this.log("Updating existing shade: %s", shade.id);
-					newShades[shade.id] = this.accessories[shade.id];
+					newShades[shade.id] = this.updateShadeAcccessory(shade);
 				}
 
 				this.updateShadeValues(shade);
@@ -173,7 +179,6 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 
 			for (var shadeId in this.accessories) {
 				if (!newShades[shadeId]) {
-					this.log("Shade was removed: %s", shadeId);
 					this.removeShadeAccessory(this.accessories[shadeId]);
 				}
 			}
