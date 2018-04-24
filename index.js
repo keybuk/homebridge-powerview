@@ -68,13 +68,6 @@ PowerViewPlatform.prototype.configureAccessory = function(accessory) {
  	this.useShadeAccessory(accessory);
 }
 
-// Call to add an accessory to the platform.
-PowerViewPlatform.prototype.addAccessory = function(accessory) {
-	this.log("Add Accessory %s", accessory.displayName);
-
-	this.api.registerPlatformAccessories("homebridge-powerview", "PowerView", [accessory]);
-}
-
 // Call to remove an accessory from the platform.
 PowerViewPlatform.prototype.removeAccessory = function(accessory) {
 	this.log("Removing accessory %s", accessory.displayName);
@@ -83,8 +76,8 @@ PowerViewPlatform.prototype.removeAccessory = function(accessory) {
 	this.shades[accessory.context.shadeId] = null;
 }
 
-// Create and add a shade accessory.
-PowerViewPlatform.prototype.addShade = function(shadeData) {
+// Adds a new shade accessory.
+PowerViewPlatform.prototype.addShadeAccessory = function(shadeData) {
 	var name = Buffer.from(shadeData.name, 'base64').toString();
 	var shadeId = shadeData.id;
 	this.log("Adding shade %s: %s", shadeId, name);
@@ -107,7 +100,7 @@ PowerViewPlatform.prototype.addShade = function(shadeData) {
 	}
 
 	this.useShadeAccessory(accessory, shadeData);
-	this.addAccessory(accessory);
+	this.api.registerPlatformAccessories("homebridge-powerview", "PowerView", [accessory]);
 
 	return accessory;
 }
@@ -175,7 +168,7 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 
 				if (this.shades[shadeId] == null) {
 					this.log("Found new shade: %s", shadeId);
-					newShades[shadeId] = this.addShade(shadeData);
+					newShades[shadeId] = this.addShadeAccessory(shadeData);
 				} else {
 					this.log("Updating existing shade: %s", shadeId);
 					newShades[shadeId] = this.shades[shadeId];
