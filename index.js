@@ -1,11 +1,14 @@
-var PowerViewHub = require('./PowerViewHub').PowerViewHub;
+var hub = require('./PowerViewHub'),
+	PowerViewHub = hub.PowerViewHub,
+	Position = hub.Position;
 var Accessory, Service, Characteristic, UUIDGen;
 
 let ShadePollIntervalMs = 60000;
 
 let Shade = {
 	ROLLER: 1,
-	DUETTE: 2
+	DUETTE: 2,
+	SILHOUETTE: 3
 }
 
 let SubType = {
@@ -13,10 +16,6 @@ let SubType = {
 	TOP: 'top'
 }
 
-let Position = {
-	BOTTOM: 1,
-	TOP: 2
-}
 
 // TODO:
 // - battery status in shadeData:
@@ -70,6 +69,8 @@ PowerViewPlatform.prototype.shadeType = function(shade) {
 			return Shade.ROLLER;
 		case 8:
 			return Shade.DUETTE;
+		case 23:
+			return Shade.SILHOUETTE;
 		default:
 			this.log("Unknown shade type %d, assuming roller", shade.type);
 			return Shade.ROLLER
@@ -156,6 +157,30 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 		.removeAllListeners('set')
 		.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.BOTTOM));
 
+	if (accessory.context.shadeType == Shade.SILHOUETTE) {
+		service
+			.getCharacteristic(Characteristic.CurrentHorizontalTiltAngle)
+			.removeAllListeners('get')
+			.on('get', this.getPosition.bind(this, accessory.context.shadeId, Position.VANES));
+
+		service
+			.getCharacteristic(Characteristic.TargetHorizontalTiltAngle)
+			.removeAllListeners('set')
+			.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.VANES));
+	} else {
+		if (service.testCharacteristic(Characteristic.TargetHorizontalTiltAngle)) {
+			var characteristic = service.getCharacteristic(Characteristic.TargetHorizontalTiltAngle);
+			service.removeCharacteristic(characteristic);
+			service.addOptionalCharacteristic(Characteristic.TargetHorizontalTiltAngle);
+		}
+
+		if (service.testCharacteristic(Characteristic.CurrentHorizontalTiltAngle)) {
+			var characteristic = service.getCharacteristic(Characteristic.CurrentHorizontalTiltAngle);
+			service.removeCharacteristic(characteristic);
+			service.addOptionalCharacteristic(Characteristic.CurrentHorizontalTiltAngle);
+		}
+	}
+
 	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
 	if (accessory.context.shadeType == Shade.DUETTE) {
 		if (!service)
@@ -197,8 +222,29 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 					service.setCharacteristic(Characteristic.CurrentPosition, positions[Position.BOTTOM]);
 				service.updateCharacteristic(Characteristic.TargetPosition, positions[Position.BOTTOM]);
 				service.setCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
+
+				if (accessory.context.shadeType == Shade.SILHOUETTE) {
+					if (current)
+						service.setCharacteristic(Characteristic.CurrentHorizontalTiltAngle, 0)
+					service.updateCharacteristic(Characteristic.TargetHorizontalTiltAngle, 0);
+				}
 			}
 
+			if (position == Position.VANES && accessory.context.shadeType == Shade.SILHOUETTE) {
+				positions[Position.VANES] = Math.round(90 * hubValue / 32767);
+
+				var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.BOTTOM);
+
+				// Once we have a vane position, the shade must be closed.
+				if (current)
+					service.setCharacteristic(Characteristic.CurrentPosition, 0);
+				service.updateCharacteristic(Characteristic.TargetPosition, 0);
+				service.setCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
+
+				if (current)
+					service.setCharacteristic(Characteristic.CurrentHorizontalTiltAngle, positions[Position.VANES]);
+				service.updateCharacteristic(Characteristic.TargetHorizontalTiltAngle, positions[Position.VANES]);
+			}
 
 			if (position == Position.TOP && accessory.context.shadeType == Shade.DUETTE) {
 				positions[Position.TOP] = Math.round(100 * hubValue / 65535);
@@ -343,6 +389,9 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, position, value, cal
 			break;
 		case Position.TOP:
 			var hubValue = Math.round(65535 * value / 100);
+			break;
+		case Position.VANES:
+			var hubValue = Math.round(32767 * value / 90);
 			break;
 	}
 

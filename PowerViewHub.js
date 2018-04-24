@@ -1,11 +1,18 @@
 var request = require('request');
 
 module.exports = {
-	PowerViewHub: PowerViewHub
+	PowerViewHub: PowerViewHub,
+	Position: Position
 }
 
 let InitialRequestDelayMs = 100;
 let RequestIntervalMs = 100;
+
+let Position = {
+	BOTTOM: 1,
+	TOP: 2,
+	VANES: 3
+}
 
 
 function PowerViewHub(log, host) {
@@ -150,8 +157,16 @@ PowerViewHub.prototype.putShade = function(shadeId, position, value, callback) {
 			// Set the new position.
 			positions[position] = value;
 
+			// Setting a tilt, and a bottom position, should be mutually exclusive.
+			if (position == Position.VANES && value) {
+				delete positions[Position.BOTTOM];
+			} else if (position == Position.BOTTOM && value) {
+				delete positions[Position.VANES];
+			}
+
 			// Reconstruct the data again, this places it back in position order.
 			i = 1;
+			queued.data.positions = {};
 			for (var position in positions) {
 				queued.data.positions['posKind'+i] = parseInt(position);
 				queued.data.positions['position'+i] = positions[position];
