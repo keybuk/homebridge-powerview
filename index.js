@@ -14,7 +14,7 @@ let Shade = {
 let ShadeTypes = {
 	ROLLER: [ 5, 42 ],
 	DUETTE: [ 8 ],
-	SILHOUETTE: [ 23 ]
+	SILHOUETTE: [ 18, 23 ]
 }
 
 let SubType = {

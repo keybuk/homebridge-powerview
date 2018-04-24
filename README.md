@@ -9,7 +9,7 @@ You can download it from [npm](https://www.npmjs.com/package/homebridge-powervie
 Supports:
 
  * Roller Shades.
- * Silhouette Shades with Vanes. The main accessory controls the vertical movement of the shades, and a slider under Details controls the tilt of the vanes. They can be controlled independently or combined using HomeKit scenes.
+ * Silhouette and Pirouette Shades with Vanes. The main accessory controls the vertical movement of the shades, and a slider under Details controls the tilt of the vanes. They can be controlled independently or combined using HomeKit scenes.
  * Duette Top-Down/Bottom-Up Shades. You will get two accessories, one for the bottom of the shade, and one of the top. They can be controlled independently or combined using HomeKit scenes,
 
 ## Installation
