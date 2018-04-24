@@ -142,7 +142,7 @@ PowerViewHub.prototype.getShade = function(shadeId, refresh = false, callback) {
 
 // Makes a shades API request to change the position of a single shade.
 // Requests are queued so only one is in flight at a time, and they are smart merged.
-PowerViewHub.prototype.putShade = function(shadeId, position, value, callback) {
+PowerViewHub.prototype.putShade = function(shadeId, position, value, userValue,callback) {
 	for (var queued of this.queue) {
 		if (queued.shadeId == shadeId && queued.data && queued.data.positions) {
 			// Parse out the positions data back into a list of position to value.
@@ -154,11 +154,20 @@ PowerViewHub.prototype.putShade = function(shadeId, position, value, callback) {
 			// Set the new position.
 			positions[position] = value;
 
-			// Setting a tilt, and a bottom position, should be mutually exclusive.
-			if (position == Position.VANES && value) {
+			if (position == Position.VANES && userValue) {
+				// Setting a non-zero vanes position overrides any bottom position since
+				// this will close the shades.
 				delete positions[Position.BOTTOM];
-			} else if (position == Position.BOTTOM && value) {
+			} else if (position == Position.VANES && positions[Position.BOTTOM] != null) {
+				// Otherwise don't set a zero vanes position if there's a bottom position.
 				delete positions[Position.VANES];
+			} else if (position == Position.BOTTOM && userValue) {
+				// Setting a non-zero bottom position overrides any vanes position since
+				// this will open the shades.
+				delete positions[Position.VANES];
+			} else if (position == Position.BOTTOM && positions[Position.VANES] != null) {
+				// Otherwise don't set a zero bottom position if there's a vanes position.
+				delete position[Position.BOTTOM];
 			}
 
 			// Reconstruct the data again, this places it back in position order.
