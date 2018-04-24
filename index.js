@@ -61,11 +61,11 @@ function PowerViewPlatform(log, config, api) {
 
 // Called when a cached accessory is loaded to set up callbacks.
 PowerViewPlatform.prototype.configureAccessory = function(accessory) {
-  this.log("Configure Accessory %s", accessory.displayName);
+	this.log("Cached shade %s: %s", accessory.context.shadeId, accessory.displayName);
 
-  accessory.reachable = true;
+	accessory.reachable = true;
 
-  this.useShadeAccessory(accessory);
+ 	this.useShadeAccessory(accessory);
 }
 
 // Call to add an accessory to the platform.
