@@ -77,36 +77,35 @@ PowerViewPlatform.prototype.removeAccessory = function(accessory) {
 }
 
 // Adds a new shade accessory.
-PowerViewPlatform.prototype.addShadeAccessory = function(shadeData) {
-	var name = Buffer.from(shadeData.name, 'base64').toString();
-	var shadeId = shadeData.id;
-	this.log("Adding shade %s: %s", shadeId, name);
+PowerViewPlatform.prototype.addShadeAccessory = function(shade) {
+	var name = Buffer.from(shade.name, 'base64').toString();
+	this.log("Adding shade %s: %s", shade.id, name);
 
 	var uuid = UUIDGen.generate(name);
 
 	var accessory = new Accessory(name, uuid);
-	accessory.context.shadeId = shadeId;
+	accessory.context.shadeId = shade.id;
 
-	if (shadeData.positions == null) {
-		this.log("Missing position data in shade data, about to crash", shadeData);
+	if (shade.positions == null) {
+		this.log("Missing position data in shade data, about to crash", shade);
 	}
 
 	// FIXME this should move into useShadeAccessory
-	if (shadeData.positions.posKind2 == 2) {
+	if (shade.positions.posKind2 == 2) {
 		accessory.addService(Service.WindowCovering, name, BottomServiceSubtype);
 		accessory.addService(Service.WindowCovering, name, TopServiceSubtype);
 	} else {
 		accessory.addService(Service.WindowCovering, name, BottomServiceSubtype);
 	}
 
-	this.useShadeAccessory(accessory, shadeData);
+	this.useShadeAccessory(accessory, shade);
 	this.api.registerPlatformAccessories("homebridge-powerview", "PowerView", [accessory]);
 
 	return accessory;
 }
 
 // Set up callbacks for a shade accessory.
-PowerViewPlatform.prototype.useShadeAccessory = function(accessory, shadeData) {
+PowerViewPlatform.prototype.useShadeAccessory = function(accessory, shade) {
 	this.log("Use accessory %s", accessory.displayName);
 
 	var shadeId = accessory.context.shadeId;
@@ -114,9 +113,9 @@ PowerViewPlatform.prototype.useShadeAccessory = function(accessory, shadeData) {
 	this.shades[shadeId].accessory = accessory;
 	this.shades[shadeId].positions = [];
 
-	if (shadeData != null) {
-		this.shades[shadeId].data = shadeData;
-		this.setShade(shadeId, shadeData);
+	if (shade) {
+		this.shades[shadeId].data = shade;
+		this.setShade(shadeId, shade);
 	} else {
 		// FIXME we don't wait for this callback
 		this.updateShade(shadeId);
@@ -163,22 +162,20 @@ PowerViewPlatform.prototype.updateShades = function(callback) {
 	this.hub.getShades(function(err, shadeData) {
 		if (!err) {
 			var newShades = [];
-			for (var shadeData of shadeData) {
-				var shadeId = shadeData.id;
-
-				if (this.shades[shadeId] == null) {
-					this.log("Found new shade: %s", shadeId);
-					newShades[shadeId] = this.addShadeAccessory(shadeData);
+			for (var shade of shadeData) {
+				if (!this.shades[shade.id]) {
+					this.log("Found new shade: %s", shade.id);
+					newShades[shade.id] = this.addShadeAccessory(shade);
 				} else {
-					this.log("Updating existing shade: %s", shadeId);
-					newShades[shadeId] = this.shades[shadeId];
+					this.log("Updating existing shade: %s", shade.id);
+					newShades[shade.id] = this.shades[shade.id];
 				}
 
-				this.setShade(shadeId, shadeData);
+				this.setShade(shade.id, shade);
 			}
 
 			for (var shadeId in this.shades) {
-				if (newShades[shadeId] == null) {
+				if (!newShades[shadeId]) {
 					this.log("Shade was removed: %s", shadeId);
 					this.removeAccessory(this.shades[shadeId].accessory);
 				}
@@ -203,27 +200,27 @@ PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 }
 
 // Update the cached data and characteristic values for a shade.
-PowerViewPlatform.prototype.setShade = function(shadeId, shadeData) {
+PowerViewPlatform.prototype.setShade = function(shadeId, shade) {
 	var accessory = this.shades[shadeId].accessory;
-	this.shades[shadeId].data = shadeData;
+	this.shades[shadeId].data = shade;
 
 	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, BottomServiceSubtype);
-	if (service != null && shadeData.positions.position1 != null) {
-		var position = Math.round(100 * (shadeData.positions.position1 / 65535));
+	if (service != null && shade.positions.position1 != null) {
+		var position = Math.round(100 * (shade.positions.position1 / 65535));
 		this.shades[shadeId].positions[1] = position;
 
-		this.log("now %s/%d = %d (%d)", shadeId, 1, position, shadeData.positions.position1);
+		this.log("now %s/%d = %d (%d)", shadeId, 1, position, shade.positions.position1);
 
 		service.updateCharacteristic(Characteristic.CurrentPosition, position);
 		service.updateCharacteristic(Characteristic.TargetPosition, position);
 	}
 
 	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, TopServiceSubtype);
-	if (service != null && shadeData.positions.position2 != null) {
-		var position = Math.round(100 * (shadeData.positions.position2 / 65535));
+	if (service != null && shade.positions.position2 != null) {
+		var position = Math.round(100 * (shade.positions.position2 / 65535));
 		this.shades[shadeId].positions[2] = position;
 
-		this.log("now %s/%d = %d (%d)", shadeId, 2, position, shadeData.positions.position2);
+		this.log("now %s/%d = %d (%d)", shadeId, 2, position, shade.positions.position2);
 
 		service.updateCharacteristic(Characteristic.CurrentPosition, position);
 		service.updateCharacteristic(Characteristic.TargetPosition, position);
@@ -246,7 +243,7 @@ PowerViewPlatform.prototype.pollShades = function() {
 PowerViewPlatform.prototype.getPosition = function(shadeId, positionId, callback) {
 	this.log("getPosition %s/%d", shadeId, positionId);
 
-	this.updateShade(shadeId, function(err, shadeData) {
+	this.updateShade(shadeId, function(err, shade) {
 		if (!err) {
 			callback(null, this.shades[shadeId].positions[positionId]);
 		} else {
