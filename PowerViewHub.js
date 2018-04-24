@@ -143,3 +143,17 @@ PowerViewHub.prototype.schedulePut = function(delay) {
 		}.bind(this));
 	}.bind(this), delay);
 }
+
+// Makes a shades API request to jog a shade.
+PowerViewHub.prototype.jogShade = function(shadeId, callback) {
+	var data = { 'motion': 'jog' };
+
+	this.putShade(shadeId, data, callback);
+}
+
+// Makes a shades API request to calibrate a shade.
+PowerViewHub.prototype.calibrateShade = function(shadeId, callback) {
+	var data = { 'motion': 'calibrate' };
+
+	this.putShade(shadeId, data, callback);
+}
