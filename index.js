@@ -235,12 +235,12 @@ PowerViewPlatform.prototype.updateShade = function(shadeId, callback) {
 
 
 // Characteristic callback for CurrentPosition.get
-PowerViewPlatform.prototype.getPosition = function(shadeId, positionId, callback) {
-	this.log("getPosition %s/%d", shadeId, positionId);
+PowerViewPlatform.prototype.getPosition = function(shadeId, position, callback) {
+	this.log("getPosition %s/%d", shadeId, position);
 
 	this.updateShade(shadeId, function(err, positions) {
 		if (!err) {
-			callback(null, positions[positionId]);
+			callback(null, positions[position]);
 		} else {
 			callback(err);
 		}
@@ -262,7 +262,7 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, position, value, cal
 	}.bind(this));
 }
 
-PowerViewPlatform.prototype.getState = function(shadeId, positionId, callback) {
-	this.log("getState %s/%d", shadeId, positionId);
+PowerViewPlatform.prototype.getState = function(shadeId, position, callback) {
+	this.log("getState %s/%d", shadeId, position);
 	callback(null, Characteristic.PositionState.STOPPED);
 }
