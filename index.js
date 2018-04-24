@@ -111,15 +111,9 @@ PowerViewPlatform.prototype.updateShadeAcccessory = function(shade) {
 	var accessory = this.accessories[shade.id];
 	this.log("Updating shade %s: %s", shade.id, accessory.displayName);
 
-	// If the shade changes type, remove the features that it should not have.
 	var newType = this.shadeType(shade);
 	if (newType != accessory.context.shadeType) {
 		this.log("Shade changed type %d -> %d", accessory.context.shadeType, newType);
-
-		if (accessory.context.shadeType == Shade.DUETTE) {
-			accessory.removeService(accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP));
-		}
-
 		accessory.context.shadeType = newType;
 
 		this.configureShadeAccessory(accessory);
@@ -155,8 +149,8 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 		.removeAllListeners('set')
 		.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.BOTTOM));
 
+	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
 	if (accessory.context.shadeType == Shade.DUETTE) {
-		service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
 		if (!service)
 			service = accessory.addService(Service.WindowCovering, accessory.displayName, SubType.TOP);
 
@@ -169,6 +163,8 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 			.getCharacteristic(Characteristic.TargetPosition)
 			.removeAllListeners('set')
 			.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.TOP));
+	} else {
+		accessory.removeService(service);
 	}
 }
 
