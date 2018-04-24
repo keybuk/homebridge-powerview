@@ -7,16 +7,16 @@ let ShadePollIntervalMs = 60000;
 
 let Shade = {
 	ROLLER: 1,
-	DUETTE: 2,
-	SILHOUETTE: 3,
-	LUMINETTE: 4
+	TOP_BOTTOM: 2,
+	HORIZONTAL: 3,
+	VERTICAL: 4
 }
 
 let ShadeTypes = {
 	ROLLER: [ 5, 42 ],
-	DUETTE: [ 8 ],
-	SILHOUETTE: [ 18, 23 ],
-	LUMINETTE: [ 16 ]
+	TOP_BOTTOM: [ 8 ],
+	HORIZONTAL: [ 18, 23 ],
+	VERTICAL: [ 16 ]
 }
 
 let SubType = {
@@ -59,9 +59,9 @@ function PowerViewPlatform(log, config, api) {
 		this.pollShadesForUpdate = config["pollShadesForUpdate"] ? true : false;
 
 		this.forceRollerShades = config["forceRollerShades"] || [];
-		this.forceDuetteShades = config["forceDuetteShades"] || [];
-		this.forceSilhouetteShades = config["forceSilhouetteShades"] || [];
-		this.forceLuminetteShades = config["forceLuminetteShades"] || [];
+		this.forceTopBottomShades = config["forceTopBottomShades"] || [];
+		this.forceHorizontalShades = config["forceHorizontalShades"] || [];
+		this.forceVerticalShades = config["forceVerticalShades"] || [];
 
 		this.api.on('didFinishLaunching', function() {
 			this.updateHubInfo();
@@ -78,21 +78,21 @@ function PowerViewPlatform(log, config, api) {
 PowerViewPlatform.prototype.shadeType = function(shade) {
 	if (this.forceRollerShades.includes(shade.id))
 		return Shade.ROLLER;
-	if (this.forceDuetteShades.includes(shade.id))
-		return Shade.DUETTE;
-	if (this.forceSilhouetteShades.includes(shade.id))
-		return Shade.SILHOUETTE;
-	if (this.forceLuminetteShades.includes(shade.id))
-		return Shade.LUMINETTE;
+	if (this.forceTopBottomShades.includes(shade.id))
+		return Shade.TOP_BOTTOM;
+	if (this.forceHorizontalShades.includes(shade.id))
+		return Shade.HORIZONTAL;
+	if (this.forceVerticalShades.includes(shade.id))
+		return Shade.VERTICAL;
 
 	if (ShadeTypes.ROLLER.includes(shade.type))
 		return Shade.ROLLER;
-	if (ShadeTypes.DUETTE.includes(shade.type))
-		return Shade.DUETTE;
-	if (ShadeTypes.SILHOUETTE.includes(shade.type))
-		return Shade.SILHOUETTE;
-	if (ShadeTypes.LUMINETTE.includes(shade.type))
-		return Shade.LUMINETTE;
+	if (ShadeTypes.TOP_BOTTOM.includes(shade.type))
+		return Shade.TOP_BOTTOM;
+	if (ShadeTypes.HORIZONTAL.includes(shade.type))
+		return Shade.HORIZONTAL;
+	if (ShadeTypes.VERTICAL.includes(shade.type))
+		return Shade.VERTICAL;
 
 	this.log("*** Shade %d has unknown type %d, assuming roller ***", shade.id, shade.type);
 	return Shade.ROLLER
@@ -109,7 +109,7 @@ PowerViewPlatform.prototype.configureAccessory = function(accessory) {
 		// Port over a pre-typing shade.
 		var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
 		if (service) {
-			accessory.context.shadeType = Shade.DUETTE;
+			accessory.context.shadeType = Shade.TOP_BOTTOM;
 		} else {
 			accessory.context.shadeType = Shade.ROLLER;
 		}
@@ -178,7 +178,7 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 		.removeAllListeners('set')
 		.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.BOTTOM));
 
-	if (accessory.context.shadeType == Shade.SILHOUETTE) {
+	if (accessory.context.shadeType == Shade.HORIZONTAL) {
 		service
 			.getCharacteristic(Characteristic.CurrentHorizontalTiltAngle)
 			.removeAllListeners('get')
@@ -202,9 +202,9 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 		}
 	}
 
-	// For luminette, we stick to the default "bottom" subtype even though these are left/right shades;
-	// because HomeKit doesn't make a distinction anyway.
-	if (accessory.context.shadeType == Shade.LUMINETTE) {
+	// For vertical shades, we stick to the default "bottom" subtype even though these are left/right;
+	// HomeKit doesn't make a distinction anyway.
+	if (accessory.context.shadeType == Shade.VERTICAL) {
 		service
 			.getCharacteristic(Characteristic.CurrentVerticalTiltAngle)
 			.removeAllListeners('get')
@@ -229,7 +229,7 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 	}
 
 	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
-	if (accessory.context.shadeType == Shade.DUETTE) {
+	if (accessory.context.shadeType == Shade.TOP_BOTTOM) {
 		if (!service)
 			service = accessory.addService(Service.WindowCovering, accessory.displayName, SubType.TOP);
 
@@ -270,20 +270,20 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 				service.updateCharacteristic(Characteristic.TargetPosition, positions[Position.BOTTOM]);
 				service.setCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
 
-				if (accessory.context.shadeType == Shade.SILHOUETTE) {
+				if (accessory.context.shadeType == Shade.HORIZONTAL) {
 					if (current)
 						service.setCharacteristic(Characteristic.CurrentHorizontalTiltAngle, 0)
 					service.updateCharacteristic(Characteristic.TargetHorizontalTiltAngle, 0);
 				}
 
-				if (accessory.context.shadeType == Shade.LUMINETTE) {
+				if (accessory.context.shadeType == Shade.VERTICAL) {
 					if (current)
 						service.setCharacteristic(Characteristic.CurrentVerticalTiltAngle, 0)
 					service.updateCharacteristic(Characteristic.TargetVerticalTiltAngle, 0);
 				}
 			}
 
-			if (position == Position.VANES && accessory.context.shadeType == Shade.SILHOUETTE) {
+			if (position == Position.VANES && accessory.context.shadeType == Shade.HORIZONTAL) {
 				positions[Position.VANES] = Math.round(90 * hubValue / 32767);
 
 				var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.BOTTOM);
@@ -299,7 +299,7 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 				service.updateCharacteristic(Characteristic.TargetHorizontalTiltAngle, positions[Position.VANES]);
 			}
 
-			if (position == Position.VANES && accessory.context.shadeType == Shade.LUMINETTE) {
+			if (position == Position.VANES && accessory.context.shadeType == Shade.VERTICAL) {
 				positions[Position.VANES] = Math.round(90 * hubValue / 32767);
 
 				var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.BOTTOM);
@@ -315,7 +315,7 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 				service.updateCharacteristic(Characteristic.TargetVerticalTiltAngle, positions[Position.VANES]);
 			}
 
-			if (position == Position.TOP && accessory.context.shadeType == Shade.DUETTE) {
+			if (position == Position.TOP && accessory.context.shadeType == Shade.TOP_BOTTOM) {
 				positions[Position.TOP] = Math.round(100 * hubValue / 65535);
 
 				var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);

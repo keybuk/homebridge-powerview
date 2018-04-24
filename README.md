@@ -11,9 +11,9 @@ Supports both the Generation 1 and 2 hubs.
 Supported Shades:
 
  * Roller Shades.
- * Silhouette and Pirouette Shades with Horizontal Vanes. The main accessory controls the vertical movement of the shades, and a slider under Details controls the tilt of the vanes when closed.
- * Luminette Shades with Vertical Vanes. The main accessory controls the horizontal movement of the shades, and a slider under Details controls the tilt of the vanes when closed..
- * Duette Top-Down/Bottom-Up Shades. You will get two accessories, one for the bottom of the shade, and one of the top. They can be controlled independently or combined using HomeKit scenes.
+ * Shades with Horizontal Vanes (e.g. Silhouette, Pirouette). The main accessory controls the vertical movement of the shades, and a slider under Details controls the tilt of the vanes when closed.
+ * Shades with Vertical Vanes (e.g. Luminette). The main accessory controls the horizontal movement of the shades, and a slider under Details controls the tilt of the vanes when closed..
+ * Top-Down/Bottom-Up Shades (e.g. Duette). You will get two accessories, one for the bottom of the shade, and one of the top. They can be controlled independently or combined using HomeKit scenes.
 
  Shades can participate in HomeKit scenes and automations.
 
@@ -57,8 +57,8 @@ The plugin uses the information from the PowerView hub to determine the types of
 
 If you see this, first please file an issue and provide details about the kind of shade that this is, so I can correctly recognize it in future versions.
 
-You can then add a `forceRollerShades`, `forceSilhouetteShades`, `forceLuminetteShades`, or `forceDuetteShades` key to your `config.json` to force shades to be a certain type, e.g.:
+You can then add a `forceRollerShades`, `forceTopBottomShades`, `forceHorizontalShades`, or `forceVerticalShades` key to your `config.json` to force shades to be a certain type, e.g.:
 
 ```
-"forceDuetteShades": [ 12345, 99999 ]
+"forceTopBottomShades": [ 12345, 99999 ]
 ```
