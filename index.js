@@ -192,9 +192,9 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 				this.log("%s/%d = %d (%d)", shade.id, Position.BOTTOM, positions[Position.BOTTOM], hubValue);
 
 				if (current)
-					service.updateCharacteristic(Characteristic.CurrentPosition, position);
+					service.setCharacteristic(Characteristic.CurrentPosition, position);
 				service.updateCharacteristic(Characteristic.TargetPosition, position);
-				service.updateCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
+				service.setCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
 			}
 
 			if (position == Position.TOP && accessory.context.shadeType == Shade.DUETTE) {
@@ -204,9 +204,9 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 				this.log("%s/%d = %d (%d)", shade.id, Position.TOP, positions[Position.TOP], hubValue);
 
 				if (current)
-					service.updateCharacteristic(Characteristic.CurrentPosition, position);
+					service.setCharacteristic(Characteristic.CurrentPosition, position);
 				service.updateCharacteristic(Characteristic.TargetPosition, position);
-				service.updateCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
+				service.setCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
 			}
 		}
 	}
