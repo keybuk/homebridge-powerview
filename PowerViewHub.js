@@ -139,14 +139,22 @@ PowerViewHub.prototype.getShade = function(shadeId, refresh = false, callback) {
 PowerViewHub.prototype.putShade = function(shadeId, position, value, callback) {
 	for (var queued of this.queue) {
 		if (queued.shadeId == shadeId && queued.data && queued.data.positions) {
-			// Overwrite the same position if it's queued, otherwise append a new one.
+			// Parse out the positions data back into a list of position to value.
+			var positions = [];
 			for (var i = 1; queued.data.positions['posKind'+i]; ++i) {
-				if (queued.data.positions['posKind'+i] == position)
-					break;
+				positions[queued.data.positions['posKind'+i]] = queued.data.positions['position'+i];
 			}
 
-			queued.data.positions['posKind'+i] = position;
-			queued.data.positions['position'+i] = value;
+			// Set the new position.
+			positions[position] = value;
+
+			// Reconstruct the data again, this places it back in position order.
+			i = 1;
+			for (var position in positions) {
+				queued.data.positions['posKind'+i] = parseInt(position);
+				queued.data.positions['position'+i] = positions[position];
+				++i;
+			}
 
 			queued.callbacks.push(callback);
 			return;
