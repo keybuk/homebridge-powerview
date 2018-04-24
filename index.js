@@ -8,6 +8,11 @@ let SubType = {
 	TOP: 'top'
 }
 
+let Position = {
+	BOTTOM: 1,
+	TOP: 2
+}
+
 // TODO:
 // - HomeKit meta-data:
 //   Manufacturer
@@ -85,7 +90,7 @@ PowerViewPlatform.prototype.addShadeAccessory = function(shade) {
 	}
 
 	// FIXME this should move into useShadeAccessory
-	if (shade.positions.posKind2 == 2) {
+	if (shade.positions.posKind2 == Position.TOP) {
 		accessory.addService(Service.WindowCovering, name, SubType.BOTTOM);
 		accessory.addService(Service.WindowCovering, name, SubType.TOP);
 	} else {
@@ -123,32 +128,32 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 	if (service != null) {
 		service
 			.getCharacteristic(Characteristic.CurrentPosition)
-			.on('get', this.getPosition.bind(this, accessory.context.shadeId, 1));
+			.on('get', this.getPosition.bind(this, accessory.context.shadeId, Position.BOTTOM));
 
 		service
 			.getCharacteristic(Characteristic.TargetPosition)
-			.on('get', this.getPosition.bind(this, accessory.context.shadeId, 1))
-			.on('set', this.setPosition.bind(this, accessory.context.shadeId, 1));
+			.on('get', this.getPosition.bind(this, accessory.context.shadeId, Position.BOTTOM))
+			.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.BOTTOM));
 
 		service
 			.getCharacteristic(Characteristic.PositionState)
-			.on('get', this.getState.bind(this, accessory.context.shadeId, 1));
+			.on('get', this.getState.bind(this, accessory.context.shadeId, Position.BOTTOM));
 	}
 
 	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
 	if (service != null) {
 		service
 			.getCharacteristic(Characteristic.CurrentPosition)
-			.on('get', this.getPosition.bind(this, accessory.context.shadeId, 2));
+			.on('get', this.getPosition.bind(this, accessory.context.shadeId, Position.TOP));
 
 		service
 			.getCharacteristic(Characteristic.TargetPosition)
-			.on('get', this.getPosition.bind(this, accessory.context.shadeId, 2))
-			.on('set', this.setPosition.bind(this, accessory.context.shadeId, 2));
+			.on('get', this.getPosition.bind(this, accessory.context.shadeId, Position.TOP))
+			.on('set', this.setPosition.bind(this, accessory.context.shadeId, Position.TOP));
 
 		service
 			.getCharacteristic(Characteristic.PositionState)
-			.on('get', this.getState.bind(this, accessory.context.shadeId, 2));
+			.on('get', this.getState.bind(this, accessory.context.shadeId, Position.TOP));
 	}
 }
 
@@ -159,8 +164,8 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade) {
 
 	var service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.BOTTOM);
 	if (service != null && shade.positions.position1 != null) {
-		positions[1] = Math.round(100 * (shade.positions.position1 / 65535));
-		this.log("now %s/%d = %d (%d)", shade.id, 1, positions[1], shade.positions.position1);
+		positions[Position.BOTTOM] = Math.round(100 * (shade.positions.position1 / 65535));
+		this.log("now %s/%d = %d (%d)", shade.id, Position.BOTTOM, positions[Position.BOTTOM], shade.positions.position1);
 
 		service.updateCharacteristic(Characteristic.CurrentPosition, position);
 		service.updateCharacteristic(Characteristic.TargetPosition, position);
@@ -168,8 +173,8 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade) {
 
 	service = accessory.getServiceByUUIDAndSubType(Service.WindowCovering, SubType.TOP);
 	if (service != null && shade.positions.position2 != null) {
-		positions[2] = Math.round(100 * (shade.positions.position2 / 65535));
-		this.log("now %s/%d = %d (%d)", shade.id, 2, positions[2], shade.positions.position2);
+		positions[Position.TOP] = Math.round(100 * (shade.positions.position2 / 65535));
+		this.log("now %s/%d = %d (%d)", shade.id, Position.TOP, positions[Position.TOP], shade.positions.position2);
 
 		service.updateCharacteristic(Characteristic.CurrentPosition, position);
 		service.updateCharacteristic(Characteristic.TargetPosition, position);
