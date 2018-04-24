@@ -155,7 +155,7 @@ PowerViewPlatform.prototype.configureShadeAccessory = function(accessory) {
 }
 
 // Updates the values of shade accessory characteristics.
-PowerViewPlatform.prototype.updateShadeValues = function(shade) {
+PowerViewPlatform.prototype.updateShadeValues = function(shade, current) {
 	var accessory = this.accessories[shade.id];
 
 	var positions = null;
@@ -173,7 +173,8 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade) {
 				positions[Position.BOTTOM] = Math.round(100 * (hubValue / 65535));
 				this.log("%s/%d = %d (%d)", shade.id, Position.BOTTOM, positions[Position.BOTTOM], hubValue);
 
-				service.updateCharacteristic(Characteristic.CurrentPosition, position);
+				if (current)
+					service.updateCharacteristic(Characteristic.CurrentPosition, position);
 				service.updateCharacteristic(Characteristic.TargetPosition, position);
 			}
 
@@ -183,7 +184,8 @@ PowerViewPlatform.prototype.updateShadeValues = function(shade) {
 				positions[Position.TOP] = Math.round(100 * (hubValue / 65535));
 				this.log("%s/%d = %d (%d)", shade.id, Position.TOP, positions[Position.TOP], hubValue);
 
-				service.updateCharacteristic(Characteristic.CurrentPosition, position);
+				if (current)
+					service.updateCharacteristic(Characteristic.CurrentPosition, position);
 				service.updateCharacteristic(Characteristic.TargetPosition, position);
 
 			}
@@ -264,7 +266,7 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, position, value, cal
 
 	this.hub.putShadePosition(shadeId, position, hubValue, function(err, shade) {
 		if (!err) {
-			this.updateShadeValues(shade);
+			this.updateShadeValues(shade, true);
 			callback(null);
 		} else {
 			callback(err);
