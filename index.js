@@ -325,7 +325,8 @@ PowerViewPlatform.prototype.updateHubInfo = function(callback) {
 		if (!err) {
 			this.hubName = Buffer.from(userData.hubName, 'base64').toString();
 			this.hubSerialNumber = userData.serialNumber;
-			this.hubVersion = userData.firmware.mainProcessor.name;
+			if (userData.firmware && userData.firmware.mainProcessor)
+				this.hubVersion = userData.firmware.mainProcessor.name;
 
 			this.log("Hub: %s", this.hubName);
 
