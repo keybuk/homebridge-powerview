@@ -48,6 +48,8 @@ function PowerViewPlatform(log, config, api) {
 		var host = config["host"] || 'powerview-hub.local';
 		this.hub = new PowerViewHub(log, host);
 
+		this.refreshShades = config["refreshShades"] ? true : false;
+
 		this.api.on('didFinishLaunching', function() {
 			this.updateShades();
 			this.updateHubInfo();
@@ -290,7 +292,7 @@ PowerViewPlatform.prototype.updateHubInfo = function(callback) {
 
 // Gets the current shade information, and updates values.
 PowerViewPlatform.prototype.updateShade = function(shadeId, refresh = false, callback) {
-	this.hub.getShade(shadeId, refresh, function(err, shade) {
+	this.hub.getShade(shadeId, this.refreshShades, function(err, shade) {
 		if (!err) {
 			var positions = this.updateShadeValues(shade);
 			var timedOut = refresh ? shade.timedOut : null;
