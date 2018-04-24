@@ -341,7 +341,7 @@ PowerViewPlatform.prototype.updateHubInfo = function(callback) {
 
 // Gets the current shade information, and updates values.
 PowerViewPlatform.prototype.updateShade = function(shadeId, refresh = false, callback) {
-	this.hub.getShade(shadeId, this.refreshShades, function(err, shade) {
+	this.hub.getShade(shadeId, refresh, function(err, shade) {
 		if (!err) {
 			var positions = this.updateShadeValues(shade);
 			var timedOut = refresh ? shade.timedOut : null;
@@ -369,7 +369,7 @@ PowerViewPlatform.prototype.jogShade = function(shadeId, callback) {
 PowerViewPlatform.prototype.getPosition = function(shadeId, position, callback) {
 	this.log("getPosition %s/%d", shadeId, position);
 
-	this.updateShade(shadeId, true, function(err, positions, timedOut) {
+	this.updateShade(shadeId, this.refreshShades, function(err, positions, timedOut) {
 		if (!err && positions && !timedOut) {
 			callback(null, positions[position]);
 		} else if (err) {
