@@ -58,7 +58,9 @@ PowerViewHub.prototype.scheduleRequest = function(delay) {
 					callback(null, json.shade);
 				}
 			} else {
-				this.log("Error setting position (status code %s): %s", response ? response.statusCode : "-", err);
+				if (!err)
+					err = new Error("HTTP Error " + response.statusCode);
+				this.log("Error setting position: %s", err);
 				for (var callback of queued.callbacks) {
 					callback(err);
 				}
@@ -83,7 +85,9 @@ PowerViewHub.prototype.getUserData = function(callback) {
 
 			if (callback) callback(null, json.userData);
 		} else {
-			this.log("Error getting userdata (status code %s): %s", response ? response.statusCode : "-", err);
+			if (!err)
+				err = new Error("HTTP Error " + response.statusCode);
+			this.log("Error getting userdata: %s", err);
 			if (callback) callback(err);
 		}
 	}.bind(this));
@@ -99,7 +103,9 @@ PowerViewHub.prototype.getShades = function(callback) {
 
 			if (callback) callback(null, json.shadeData);
 		} else {
-			this.log("Error getting shades (status code %s): %s", response ? response.statusCode : "-", err);
+			if (!err)
+				err = new Error("HTTP Error " + response.statusCode);
+			this.log("Error getting shades: %s", err);
 			if (callback) callback(err);
 		}
 	}.bind(this));
@@ -134,7 +140,9 @@ PowerViewHub.prototype.getShade = function(shadeId, refresh = false, callback) {
 
 			if (callback) callback(null, json.shade);
 		} else {
-			this.log("Error getting shade (status code %s): %s", response ? response.statusCode : "-", err);
+			if (!err)
+				err = new Error("HTTP Error " + response.statusCode);
+			this.log("Error getting shade: %s", err);
 			if (callback) callback(err);
 		}
 	}.bind(this));
