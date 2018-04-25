@@ -62,3 +62,26 @@ You can then add a `forceRollerShades`, `forceTopBottomShades`, `forceHorizontal
 ```
 "forceTopBottomShades": [ 12345, 98765 ]
 ```
+
+## Shade Examples
+
+For all shades, you can tab the accessory icons in the Home app to open and close the shades, or long-press to set any arbitrary position between closed and 100% open.
+
+![Roller Shades](https://i.imgur.com/Ti2mc5z.png)
+
+### Horizontal and Vertical Shades
+
+For shades with horizontal or vertical vanes, after long-pressing you can tap Details to adjust the tilt angle. For horizontal shades this will range from 0&deg; to 90&deg;, where the vanes are closed at 0&deg;, and the vanes tilted fully open at 90&deg;. For vertical shades it will range from -90&deg; to 90&deg;, with the shades fully open at 0&deg;, and fully closed in either direction at -90&deg; and 90&deg;.
+
+Adjusting the vane tilt angle will automatically close the shades if necessary, likewise adjusting the standard shade position will automatically return the vanes to 0&deg;. When creating scenes, you should ensure that if the scene intends to tilt the vanes, the shade is Closed in the scene; likewise if the scene is intended to set a shade position, that the tilt is set to 0&deg;. HomeKit isn't smart enough to update the scene itself.
+
+![Horizontal Shades](https://i.imgur.com/CPNtR4g.png)
+
+### Top-Down/Bottom-Up Shades
+
+For shades with a movable top and bottom, two accessory controls will be created; one for the movable bottom of the shade, and the other for the movable top.
+
+These can be controlled independantly, or combined in scenes.
+
+![Top-Down/Bottom-Up Shades](https://i.imgur.com/ZFZXuPK.png)
+![Top-Down/Bottom-Up Scene](https://i.imgur.com/ylG0Yrp.png)
