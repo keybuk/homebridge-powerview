@@ -431,10 +431,10 @@ PowerViewPlatform.prototype.updatePosition = function(shadeId, position, refresh
 			if (refresh && timedOut) {
 				this.log("Timeout for %d/%d", shadeId, position);
 				if (callback) callback(new Error("Timed out"));
-			} else if (!positions) {
-				if (callback) callback(new Error("Positions not available"));
 			} else {
-				if (callback) callback(null, positions[position]);
+				if (!positions)
+					this.log("Hub did not return positions for %d/%d", shadeId, position);
+				if (callback) callback(null, positions ? positions[position] : null);
 			}
 		} else {
 			if (callback) callback(err);
