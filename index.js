@@ -485,7 +485,7 @@ PowerViewPlatform.prototype.setPosition = function(shadeId, position, value, cal
 		case Position.VANES:
 			var accessory = this.accessories[shadeId];
 			if (accessory.context.shadeType == Shade.VERTICAL) {
-				var hubValue = Math.abs(Math.round(65536 * (value - 90) / 180));
+				var hubValue = Math.abs(Math.round(65535 * (value - 90) / 180));
 			} else {
 				var hubValue = Math.round(32767 * value / 90);
 			}
