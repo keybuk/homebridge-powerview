@@ -13,7 +13,7 @@ let Shade = {
 }
 
 let ShadeTypes = {
-	ROLLER: [ 5, 42 ],
+	ROLLER: [ 1, 5, 42 ],
 	TOP_BOTTOM: [ 8 ],
 	HORIZONTAL: [ 18, 23 ],
 	VERTICAL: [ 16 ]
