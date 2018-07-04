@@ -123,7 +123,7 @@ PowerViewPlatform.prototype.addShadeAccessory = function(shade) {
 	var name = Buffer.from(shade.name, 'base64').toString();
 	this.log("Adding shade %d: %s", shade.id, name);
 
-	var uuid = UUIDGen.generate(name);
+	var uuid = UUIDGen.generate(shade.id.toString());
 
 	var accessory = new Accessory(name, uuid);
 	accessory.context.shadeId = shade.id;
